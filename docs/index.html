@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1b1420">
+    <title>Grand Canyon Drill V4.1</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main>
+        <div id="game-container" aria-label="Grand Canyon Drill game"></div>
+        <p id="status" class="status loading" role="status" aria-live="polite">Loading expedition...</p>
+        <noscript>This game requires JavaScript.</noscript>
+    </main>
+    <script
+        src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"
+        onerror="document.getElementById('status').className='status error'; document.getElementById('status').textContent='Phaser could not be downloaded. Check your internet connection.'"
+    ></script>
+    <script type="module" src="js/main.js?v=4.1.2"></script>
+</body>
+</html>

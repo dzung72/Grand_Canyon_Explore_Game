@@ -1,0 +1,39 @@
+export function makeDrill(scene, scale = 1) {
+    const body = scene.add.graphics();
+    body.fillStyle(0x271d28, 1).fillRect(-19, -35, 38, 55).fillRect(-25, 5, 50, 13);
+    body.fillStyle(0x45d6c4, 1).fillRect(-14, -30, 28, 44);
+    body.fillStyle(0x8ff2dc, 1).fillRect(-9, -25, 7, 31);
+    body.fillStyle(0xffd166, 1).fillRect(-9, -18, 18, 12);
+    body.fillStyle(0x28394d, 1).fillRect(-5, -15, 10, 7);
+    body.fillStyle(0xf5e4ba, 1).fillRect(-17, 15, 34, 7);
+
+    const bit = scene.add.graphics();
+    const drawBit = (alternate = false) => {
+        bit.clear();
+        bit.fillStyle(0x271d28, 1).fillTriangle(-13, 23, 13, 23, 0, 49);
+        bit.fillStyle(0xc7d0d1, 1).fillTriangle(-8, 24, 8, 24, 0, 44);
+        bit.fillStyle(0xffffff, 1);
+        const offset = alternate ? 4 : -4;
+        bit.fillRect(offset - 3, 28, 7, 5).fillRect(-offset - 3, 36, 7, 5);
+    };
+    drawBit(false);
+
+    const container = scene.add.container(0, 0, [body, bit]).setScale(scale);
+    return { container, drawBit };
+}
+
+export function pixelButton(scene, label, callback) {
+    const button = scene.add.text(0, 0, `[ ${label} ]`, {
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize: "17px",
+        fontStyle: "bold",
+        color: "#241923",
+        backgroundColor: "#ffd166",
+        padding: { x: 12, y: 9 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    button.on("pointerover", () => button.setStyle({ backgroundColor: "#fff1c1" }));
+    button.on("pointerout", () => button.setStyle({ backgroundColor: "#ffd166" }));
+    button.on("pointerdown", callback);
+    return button;
+}
