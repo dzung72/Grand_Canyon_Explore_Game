@@ -12,7 +12,7 @@ export const ROCK_LAYERS = [
         clues: [
             { type: "ROCK", text: "Dark chert nodules occur inside marine carbonate rock." },
             { type: "ENV", text: "Carbonate mud formed on a warm, shallow marine shelf." },
-            { type: "LIFE", text: "Brachiopods, crinoids, and corals record an ancient sea." }
+            { type: "LIFE", text: "Brachiopods, crinoids, and corals record an ancient sea.", note: "Brachiopods • crinoids • corals" }
         ],
         texture: "chertyLimestone", resistance: 22, color: 0xc5b08a, accent: 0x5a5049
     },
@@ -29,7 +29,7 @@ export const ROCK_LAYERS = [
         clues: [
             { type: "ROCK", text: "Steep cross-beds are preserved in fine quartz sandstone." },
             { type: "ENV", text: "Wind moved this sand across a field of desert dunes." },
-            { type: "LIFE", text: "Chelichnus trackways occur, but body fossils are uncommon." }
+            { type: "LIFE", text: "Chelichnus trackways occur, but body fossils are uncommon.", note: "Chelichnus tracks • few body fossils" }
         ],
         texture: "crossBedding", resistance: 26, color: 0xd9c49c, accent: 0x9b795a
     },
@@ -46,7 +46,7 @@ export const ROCK_LAYERS = [
         clues: [
             { type: "ROCK", text: "The massive limestone is gray, though its cliffs look red-stained." },
             { type: "ENV", text: "It formed in a warm sea; later groundwater opened karst caves." },
-            { type: "LIFE", text: "Crinoids, corals, brachiopods, and bryozoans are common fossils." }
+            { type: "LIFE", text: "Crinoids, corals, brachiopods, and bryozoans are common fossils.", note: "Crinoids • corals • brachiopods • bryozoans" }
         ],
         texture: "massiveLimestone", resistance: 30, color: 0x81777a, accent: 0x4f494e, secondary: 0x9c4f43
     },
@@ -63,7 +63,7 @@ export const ROCK_LAYERS = [
         clues: [
             { type: "ROCK", text: "Thin green-gray shale and siltstone split into sheets." },
             { type: "ENV", text: "Mud settled on a quieter seafloor as Cambrian seas advanced." },
-            { type: "LIFE", text: "Trilobites, burrows, and tracks preserve seafloor life." }
+            { type: "LIFE", text: "Trilobites, burrows, and tracks preserve seafloor life.", note: "Trilobites • burrows • tracks" }
         ],
         texture: "thinShale", resistance: 18, color: 0x727860, accent: 0x434b40
     },
@@ -80,7 +80,7 @@ export const ROCK_LAYERS = [
         clues: [
             { type: "ROCK", text: "Coarse sandstone contains rounded pebbles and cross-beds." },
             { type: "ENV", text: "Energetic shorelines formed as a Cambrian sea moved inland." },
-            { type: "EVENT", text: "It rests on an eroded surface called the Great Unconformity." }
+            { type: "EVENT", text: "It rests on an eroded surface called the Great Unconformity.", note: "Great Unconformity beneath" }
         ],
         texture: "pebblySandstone", resistance: 27, color: 0x9a714e, accent: 0x57443b
     },
@@ -97,7 +97,7 @@ export const ROCK_LAYERS = [
         clues: [
             { type: "ROCK", text: "Dark basalt and basaltic-andesite occur as stacked lava flows." },
             { type: "ENV", text: "Magma rose while the continent stretched during failed rifting." },
-            { type: "LIFE", text: "Fossils are not expected inside rock that erupted as lava." }
+            { type: "LIFE", text: "Fossils are not expected inside rock that erupted as lava.", note: "Lava rock • fossils unlikely" }
         ],
         boundary: "REPRESENTATIVE TIME GAP: Tapeats lies across the Great Unconformity on much older rocks, but this game is not one literal borehole.",
         texture: "basaltFlows", resistance: 30, color: 0x3b3942, accent: 0x1e2027, secondary: 0x75483f
@@ -115,7 +115,7 @@ export const ROCK_LAYERS = [
         clues: [
             { type: "ROCK", text: "Sandstone, siltstone, and shale alternate through the unit." },
             { type: "ENV", text: "Rivers, floodplains, and delta-like settings shifted over time." },
-            { type: "EVENT", text: "Mixed rock types are why it is called a Formation, not Sandstone." }
+            { type: "EVENT", text: "Mixed rock types are why it is called a Formation, not Sandstone.", note: "Mixed beds • Formation, not Sandstone" }
         ],
         texture: "mixedBeds", resistance: 23, color: 0x875047, accent: 0x542f34
     },
@@ -132,7 +132,7 @@ export const ROCK_LAYERS = [
         clues: [
             { type: "ROCK", text: "Fine red-orange beds preserve ripples and polygonal mudcracks." },
             { type: "ENV", text: "Water repeatedly covered and exposed a muddy surface." },
-            { type: "LIFE", text: "Body fossils are uncommon, so sediment structures are key clues." }
+            { type: "LIFE", text: "Body fossils are uncommon, so sediment structures are key clues.", note: "Few body fossils • structures matter" }
         ],
         texture: "rippleMud", resistance: 18, color: 0xa94f3c, accent: 0x68302f
     },
@@ -149,7 +149,7 @@ export const ROCK_LAYERS = [
         clues: [
             { type: "ROCK", text: "Carbonate and clastic beds occur together in the formation." },
             { type: "ENV", text: "The sediment accumulated in a shallow, sometimes restricted sea." },
-            { type: "LIFE", text: "Stromatolites are abundant visible evidence of ancient microbial life." }
+            { type: "LIFE", text: "Stromatolites are abundant visible evidence of ancient microbial life.", note: "Abundant microbial stromatolites" }
         ],
         texture: "stromatoliteBeds", resistance: 26, color: 0x756b68, accent: 0x453b40, secondary: 0xa45d4f
     },
@@ -165,7 +165,7 @@ export const ROCK_LAYERS = [
         source: "NPS: Vishnu Basement Rocks",
         clues: [
             { type: "ROCK", text: "Strong foliation and folds show intense heat and deformation." },
-            { type: "EVENT", text: "Pale granite and pegmatite veins cut across the older schist." },
+            { type: "EVENT", text: "Pale granite and pegmatite veins cut across the older schist.", note: "Granite veins cut older schist" },
             { type: "LIFE", text: "Fossils are absent because metamorphism recrystallized the rock." }
         ],
         texture: "foldedFoliation", resistance: 30, color: 0x292b35, accent: 0xc8b8a6
@@ -176,14 +176,14 @@ export function getLayerEvidence(layer) {
     const lifeOrEvent = layer.clues.find((clue) => ["LIFE", "EVENT"].includes(clue.type));
     const environment = layer.clues.find((clue) => clue.type === "ENV");
     const rock = layer.clues.find((clue) => clue.type === "ROCK");
-    const concise = (text, limit = 68) => text.length > limit
+    const concise = (text, limit = 54) => text.length > limit
         ? `${text.slice(0, limit - 1).trim()}…`
         : text;
     return [
         {
             type: "AGE",
             text: `${layer.age}, approximately ${layer.ma.toLocaleString()} million years old.`,
-            note: `${layer.age} • ~${layer.ma.toLocaleString()} Ma`
+            note: `~${layer.ma.toLocaleString()} Ma • ${layer.age}`
         },
         { type: "ROCK", text: rock?.text || `Main rock: ${layer.rockType}.`, note: layer.rockType },
         { type: "FIELD", text: `Field clue: ${layer.feature}.`, note: layer.feature },
@@ -195,7 +195,7 @@ export function getLayerEvidence(layer) {
         {
             type: lifeOrEvent?.type || "LIFE",
             text: lifeOrEvent?.text || layer.fossil,
-            note: concise(lifeOrEvent?.text || layer.fossil)
+            note: lifeOrEvent?.note || concise(lifeOrEvent?.text || layer.fossil)
         }
     ].filter(Boolean);
 }
@@ -209,23 +209,23 @@ export function getLayerQuiz(layer, questionIndex = 0) {
     };
     const categories = [
         {
-            question: `What is the approximate age of ${layer.name}?`,
+            question: `${layer.name} is about…`,
             value: (item) => `About ${item.ma.toLocaleString()} Ma`
         },
         {
-            question: `What is the main rock type in ${layer.name}?`,
+            question: `${layer.name} is mainly…`,
             value: (item) => item.rockType
         },
         {
-            question: `In which environment did ${layer.name} form?`,
+            question: `${layer.name} formed in…`,
             value: (item) => item.formed
         },
         {
-            question: `Which field clue belongs to ${layer.name}?`,
+            question: `Which clue belongs to ${layer.name}?`,
             value: (item) => item.feature
         },
         {
-            question: `Which life or geologic clue fits ${layer.name}?`,
+            question: `Which life/event clue fits ${layer.name}?`,
             value: lifeNote
         }
     ];

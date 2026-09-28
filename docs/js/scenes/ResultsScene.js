@@ -1,4 +1,4 @@
-import { ROCK_LAYERS } from "../data/layers.js?v=4.2.1";
+import { ROCK_LAYERS } from "../data/layers.js?v=4.6.3";
 import {
     database,
     storageAvailable,
@@ -10,7 +10,7 @@ import {
     saveDatabase
 } from "../services/storage.js?v=4.4.0";
 import { pixelButton } from "../ui/components.js?v=4.6.1";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.1";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.3";
 import { retroMusic } from "../services/AudioManager.js?v=4.6.1";
 import { GAME_FONT } from "../core/theme.js?v=4.6.1";
 
@@ -100,20 +100,13 @@ export class ResultsScene extends Phaser.Scene {
             : "Surface only";
         const report = [
             `PLAYER          ${database.currentPlayer}`,
-            `LAUNCH POWER    ${this.runData.launchPower}%`,
-            `ACCURACY        ${this.runData.accuracy}%`,
-            `SCORE           ${this.runData.score || 0}`,
-            `BEST SCORE      ${this.record.bestScore || 0}`,
-            `ACTIVE TIME     ${formatRunTime(this.runData.elapsedMs)}`,
-            `BEST TIME       ${this.record.bestTimeMs ? formatRunTime(this.record.bestTimeMs) : "--:--.-"}`,
-            `CREDITS LEFT    ${this.runData.credits || 0}`,
-            `ROCK CHECKS     ${this.runData.collisions || 0}`,
-            `NEAR MISSES     ${this.runData.nearMisses || 0} • BEST x${this.runData.bestNearMissCombo || 0}`,
-            `QUIZ            ${this.runData.correctAnswers || 0} right / ${this.runData.wrongAnswers || 0} wrong`,
-            `CLUES FOUND     ${this.runData.samplesCollected || 0}`,
-            `UPGRADES        S${this.runData.upgrades?.speed || 0} M${this.runData.upgrades?.magnet || 0} E${this.runData.upgrades?.earnings || 0}`,
-            `NEW LAYERS      ${this.runData.newLayers.length}`,
-            `TOTAL PROGRESS  ${this.record.discovered}/${ROCK_LAYERS.length}`,
+            `SCORE           ${this.runData.score || 0}  •  BEST ${this.record.bestScore || 0}`,
+            `TIME            ${formatRunTime(this.runData.elapsedMs)}  •  BEST ${this.record.bestTimeMs ? formatRunTime(this.record.bestTimeMs) : "--:--.-"}`,
+            `LAYERS          ${this.record.discovered}/${ROCK_LAYERS.length}`,
+            `SAMPLES         ${this.runData.samplesCollected || 0}`,
+            `QUIZ            ${this.runData.correctAnswers || 0} right  •  ${this.runData.wrongAnswers || 0} wrong`,
+            `NEAR MISS       ${this.runData.nearMisses || 0}  •  BEST x${this.runData.bestNearMissCombo || 0}`,
+            `UPGRADES        SPD ${this.runData.upgrades?.speed || 0}  MAG ${this.runData.upgrades?.magnet || 0}  PAY ${this.runData.upgrades?.earnings || 0}`,
             `DEEPEST LAYER   ${deepest}`
         ].join("\n");
 

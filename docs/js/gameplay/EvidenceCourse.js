@@ -1,5 +1,5 @@
-import { ROCK_LAYERS, getLayerEvidence } from "../data/layers.js?v=4.4.0";
-import { getLayerChallenge } from "./layerChallenges.js?v=4.4.6";
+import { ROCK_LAYERS, getLayerEvidence } from "../data/layers.js?v=4.6.3";
+import { getLayerChallenge } from "./layerChallenges.js?v=4.6.3";
 import { GAME_FONT } from "../core/theme.js?v=4.6.1";
 
 const Phaser = window.Phaser;

@@ -1,17 +1,17 @@
-import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=4.2.1";
+import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=4.6.3";
 import { database, currentRecord, formatRunTime, saveDatabase } from "../services/storage.js?v=4.4.0";
 import { makeDrill } from "../ui/components.js?v=4.6.1";
 import { showStatus } from "../core/status.js";
 import { GAME_FONT } from "../core/theme.js?v=4.6.1";
 import { ExpeditionWorld } from "../world/ExpeditionWorld.js";
 import { ImpactEffects } from "../effects/ImpactEffects.js?v=4.4.0";
-import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=4.6.1";
-import { getLayerChallenge } from "../gameplay/layerChallenges.js?v=4.4.6";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.1";
-import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=4.6.1";
+import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=4.6.3";
+import { getLayerChallenge } from "../gameplay/layerChallenges.js?v=4.6.3";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.3";
+import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=4.6.3";
 import { QuizOverlay } from "../ui/QuizOverlay.js?v=4.6.1";
 import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=4.6.1";
-import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=4.6.1";
+import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=4.6.3";
 import { retroMusic } from "../services/AudioManager.js?v=4.6.1";
 
 const Phaser = window.Phaser;
@@ -308,7 +308,7 @@ export class ExpeditionScene extends Phaser.Scene {
             color: "#f7fbff",
             wordWrap: { width: noteWidth - 26, useAdvancedWrap: true }
         }).setScrollFactor(0).setDepth(39).setVisible(false);
-        this.currentNoteBody = this.add.text(noteLeft + 13, noteTop + (compact ? 52 : 61), "", {
+        this.currentNoteBody = this.add.text(noteLeft + 13, noteTop + (compact ? 48 : 52), "", {
             fontFamily: font,
             fontSize: compact ? "16px" : "18px",
             color: "#eaf2f8",
@@ -383,7 +383,7 @@ export class ExpeditionScene extends Phaser.Scene {
             this.roundState = "dragging";
             this.dragPointerId = pointer.id;
             this.drill.input.cursor = "grabbing";
-            this.helpText.setText("AIM • PULL HIGH • RELEASE");
+            this.helpText.setText("PULL UP • RELEASE");
             this.updateDrag(pointer);
         });
 
@@ -514,8 +514,8 @@ export class ExpeditionScene extends Phaser.Scene {
         this.currentNoteHint.setVisible(false);
         this.helpText.setText(
             this.record.discovered > 0
-                ? "AIM FOR THE OLD SHAFT • PULL UP • RELEASE"
-                : "GRAB THE DRILL • PULL UP • RELEASE"
+                ? "AIM AT SHAFT • PULL • RELEASE"
+                : "PULL UP • RELEASE"
         );
         this.drawBands();
         this.drawPowerMeter();
@@ -527,8 +527,8 @@ export class ExpeditionScene extends Phaser.Scene {
             this.roundState = "ready";
             this.helpText.setText(
                 this.record.discovered > 0
-                    ? "AIM FOR THE OLD SHAFT • PULL UP • RELEASE"
-                    : "GRAB THE DRILL • PULL UP • RELEASE"
+                    ? "AIM AT SHAFT • PULL • RELEASE"
+                    : "PULL UP • RELEASE"
             );
             showStatus("Expedition ready", "success");
         });
@@ -616,7 +616,7 @@ export class ExpeditionScene extends Phaser.Scene {
         retroMusic.effect("launch");
         this.bandGraphics.clear();
         this.aimGraphics.clear();
-        this.helpText.setText("IMPACT INCOMING!");
+        this.helpText.setText("INCOMING!");
         this.tweens.add({
             targets: this.drill,
             scaleX: 1.16,
@@ -749,7 +749,7 @@ export class ExpeditionScene extends Phaser.Scene {
             .setText(this.usesShaft ? "BOOM! OLD SHAFT HIT!" : "BOOM! SURFACE BREACH!")
             .setVisible(true)
             .setAlpha(1);
-        this.helpText.setText(`IMPACT SPEED ${Math.round(impactSpeed)}`);
+        this.helpText.setText(`IMPACT ${Math.round(impactSpeed)}`);
 
         this.impactEffects.play(
             this.drill.x,
@@ -827,7 +827,7 @@ export class ExpeditionScene extends Phaser.Scene {
         const playCenter = (this.corridorLeft + this.corridorRight) / 2;
         this.helpText.setX(playCenter);
         this.layerBanner.setX(playCenter);
-        this.helpText.setText("WASD / ARROWS / TOUCH • EXPLORE THE WHOLE LAYER • FIND 5");
+        this.helpText.setText("FIND 5 SAMPLES • DODGE ROCKS");
         this.drawEnergyBar();
         this.drawSampleIndicator(0);
     }
@@ -900,7 +900,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.wasBoosting = boosting;
         this.drill.setScale(boosting ? 1.1 : 1);
         this.boostButton
-            .setText(boosting ? "[ BOOSTING • FUEL −8%/s ]" : "[ HOLD BOOST • SPACE ]")
+            .setText(boosting ? "[ BOOST • FUEL −8%/s ]" : "[ BOOST • SPACE ]")
             .setColor(boosting ? "#f7fbff" : "#101923")
             .setBackgroundColor(boosting ? "#c44437" : "#ffd166");
         const passFactor = knownLayer ? (this.usesShaft ? 0.55 : 0.78) : 1;
@@ -936,7 +936,7 @@ export class ExpeditionScene extends Phaser.Scene {
         if (mazeResult.hit && time >= (this.mazeBumpUntil || 0)) {
             this.mazeBumpUntil = time + 360;
             this.cameras.main.shake(80, 0.003);
-            this.helpText.setText("STROMATOLITE WALL • FIND THE OPEN GAP");
+            this.helpText.setText("GATE • FIND THE GAP");
             this.alertUntil = time + 700;
         }
         if (movement.lengthSq() > 0.01) {
@@ -962,7 +962,7 @@ export class ExpeditionScene extends Phaser.Scene {
             this.cameras.main.flash(110, 255, 96, 48, false);
             retroMusic.effect("hazard");
             this.showScreenPopup("HOT BASALT  −15% FUEL", "#ff9f85");
-            this.helpText.setText("HOT BASALT POCKET • FUEL LOST");
+            this.helpText.setText("HOT ROCK • −15% FUEL");
             this.alertUntil = time + 1350;
         }
         // Movement stays quiet so collectible, quiz, impact, and transition cues remain clear.
@@ -997,8 +997,8 @@ export class ExpeditionScene extends Phaser.Scene {
         if (time > this.alertUntil && this.roundState === "drilling") {
             this.helpText.setText(
                 environment.label
-                    ? `${environment.label} • STEER AND FIND 5`
-                    : `${challenge.name} • SEARCH THE WHOLE LAYER • FIND 5`
+                    ? `${environment.label} • FIND 5`
+                    : `${challenge.name} • FIND 5`
             );
         }
 
@@ -1010,14 +1010,14 @@ export class ExpeditionScene extends Phaser.Scene {
             this.worldHeight - this.viewHeight
         );
         this.cameras.main.scrollY = Phaser.Math.Linear(this.cameras.main.scrollY, desiredScroll, 0.14);
-        const evidenceLabel = `EVIDENCE ${this.layerSamples[layerIndex].size}/5`;
+        const evidenceLabel = `SAMPLES ${this.layerSamples[layerIndex].size}/5`;
         const energyPercent = Math.round(Phaser.Math.Clamp(this.energy / this.energyMax, 0, 1) * 100);
         this.drillHudText.setText(this.viewWidth < 650
             ? `RUN ${formatRunTime(this.activeElapsedMs)}  •  LAYER ${formatRunTime(this.layerElapsedMs)}\n` +
-                `CLUES ${this.layerSamples[layerIndex].size}/5  •  ENERGY ${energyPercent}%  •  BUMPS ${this.collisions}`
+                `SAMPLES ${this.layerSamples[layerIndex].size}/5  •  FUEL ${energyPercent}%  •  HITS ${this.collisions}`
             : `RUN ${formatRunTime(this.activeElapsedMs)}  •  LAYER ${formatRunTime(this.layerElapsedMs)}  •  ` +
                 `${String(layerIndex + 1).padStart(2, "0")}/${ROCK_LAYERS.length} ${layer.name}\n` +
-                `${evidenceLabel}  •  ENERGY ${energyPercent}%  •  R ${layer.resistance}/30  •  BUMPS ${this.collisions}`
+                `${evidenceLabel}  •  FUEL ${energyPercent}%  •  HITS ${this.collisions}`
         );
         const comboLabel = this.nearMissCombo > 0 && time <= this.nearMissExpiresAt
             ? `\nNEAR MISS x${this.nearMissCombo}`
@@ -1061,7 +1061,7 @@ export class ExpeditionScene extends Phaser.Scene {
             this.corridorRight
         );
         this.drill.y -= 7;
-        this.helpText.setText("MEMORY CHECK • FIELD NOTE HIDDEN UNTIL YOU ANSWER");
+        this.helpText.setText("ROCK QUIZ • NOTE HIDDEN");
         this.setCurrentNoteVisible(false);
         const quiz = getLayerQuiz(layer, obstacle.quizIndex);
         this.quizOverlay.open(quiz, (correct) => this.resolveRockQuiz(obstacle, layer, correct));
@@ -1083,8 +1083,8 @@ export class ExpeditionScene extends Phaser.Scene {
         this.showScreenPopup(`NEAR MISS${comboText}  +${scoreGain}`, "#91eadc");
         this.helpText.setText(
             this.nearMissCombo > 1
-                ? `SKILL STREAK x${this.nearMissCombo} • KEEP MOVING`
-                : "CLEAN DODGE • CHAIN ANOTHER WITHIN 2.5s"
+                ? `COMBO x${this.nearMissCombo} • KEEP GOING`
+                : "NEAR MISS • CHAIN WITHIN 2.5s"
         );
         this.alertUntil = time + 900;
     }
@@ -1096,14 +1096,14 @@ export class ExpeditionScene extends Phaser.Scene {
             this.score += 50;
             retroMusic.effect("correct");
             this.showScreenPopup("CORRECT  +50", "#91eadc");
-            this.helpText.setText(`CORRECT • ${layer.name.toUpperCase()} ROCK CLEARED`);
+            this.helpText.setText("CORRECT +50 • ROCK CLEARED");
         } else {
             this.wrongAnswers += 1;
             this.score -= 100;
             this.slowUntil = this.time.now + 2000;
             retroMusic.effect("wrong");
             this.showScreenPopup("WRONG  −100 • SLOW 2s", "#ff9f85");
-            this.helpText.setText("CHECK THE NOTE • DRILL SLOWED FOR 2 SECONDS");
+            this.helpText.setText("−100 • SLOW 2s • CHECK NOTE");
         }
         this.setCurrentNoteVisible(true);
         this.roundState = "drilling";
@@ -1174,7 +1174,7 @@ export class ExpeditionScene extends Phaser.Scene {
             ease: "Cubic.Out",
             onComplete: () => scorePopup.destroy()
         });
-        this.helpText.setText(`PING! ${sample.clue.type} • +100 SCORE • +${creditGain} CREDITS`);
+        this.helpText.setText(`${sample.clue.type} SAMPLE • +100 • +${creditGain} CREDITS`);
         this.alertUntil = time + 1350;
         this.drawSampleIndicator(sample.layerIndex);
         this.renderCurrentLayerNote(sample.layerIndex);
@@ -1190,7 +1190,7 @@ export class ExpeditionScene extends Phaser.Scene {
             if (!fuelCan.fullHintShown) {
                 fuelCan.fullHintShown = true;
                 this.showScreenPopup("FUEL FULL • SAVE IT", "#91eadc");
-                this.helpText.setText("FUEL FULL • RETURN AFTER USING ENERGY");
+                this.helpText.setText("FUEL FULL");
                 this.alertUntil = time + 1200;
             }
             return;
@@ -1201,7 +1201,7 @@ export class ExpeditionScene extends Phaser.Scene {
         retroMusic.effect("fuel");
         this.cameras.main.flash(90, 69, 214, 196, false);
         this.showScreenPopup(`FUEL +${restored}%`, "#91eadc");
-        this.helpText.setText(`FUEL CAN RECOVERED • +${restored}% ENERGY`);
+        this.helpText.setText(`FUEL +${restored}%`);
         this.alertUntil = time + 1250;
     }
 
@@ -1306,7 +1306,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.layerEntryGraceUntil = this.time.now + 1500;
         this.roundState = "drilling";
         this.boostButton.setVisible(true);
-        this.helpText.setText("TRANSITION COMPLETE • ENTERING THE NEXT STRATA");
+        this.helpText.setText("NEXT LAYER");
         this.alertUntil = this.time.now + 1000;
     }
 
@@ -1317,15 +1317,15 @@ export class ExpeditionScene extends Phaser.Scene {
         const layer = ROCK_LAYERS[index];
         const challenge = getLayerChallenge(index);
         const isNew = index >= this.previousBest;
+        const alreadyBriefed = this.briefedLayers.has(index);
         this.renderCurrentLayerNote(index);
 
         this.layerBanner.setText(
-            `${isNew ? "NEW LAYER" : "RESURVEY"} — FIND 5 CLUES  ${String(index + 1).padStart(2, "0")}/${ROCK_LAYERS.length}\n` +
-            `${layer.name}  •  ${layer.ma} Ma\n` +
-            `${challenge.name} • COLLECT A • R • F • E • L/!`
+            `${isNew ? "NEW" : "RESURVEY"} ${String(index + 1).padStart(2, "0")}/${ROCK_LAYERS.length} • ${layer.name} • ${layer.ma} Ma\n` +
+            `${challenge.name} • FIND 5`
         );
         this.tweens.killTweensOf(this.layerBanner);
-        if (this.viewWidth < 650) {
+        if (this.viewWidth < 650 || !alreadyBriefed) {
             this.layerBanner.setAlpha(0);
         } else {
             this.layerBanner.setAlpha(0).setY(92);
@@ -1339,7 +1339,7 @@ export class ExpeditionScene extends Phaser.Scene {
             });
         }
 
-        if (!this.briefedLayers.has(index)) {
+        if (!alreadyBriefed) {
             this.briefedLayers.add(index);
             this.roundState = "briefing";
             this.boostButton.setVisible(false);
@@ -1358,7 +1358,7 @@ export class ExpeditionScene extends Phaser.Scene {
                 this.layerEntryGraceUntil = this.time.now + 1500;
                 this.collisionCooldownUntil = Math.max(this.collisionCooldownUntil, this.layerEntryGraceUntil);
                 retroMusic.effect("layer");
-                this.helpText.setText(`${challenge.name} • FIND ALL 5 EVIDENCE SAMPLES`);
+                this.helpText.setText(`${challenge.name} • FIND 5`);
                 this.alertUntil = this.time.now + 1500;
             });
         }
@@ -1370,16 +1370,24 @@ export class ExpeditionScene extends Phaser.Scene {
         const evidence = getLayerEvidence(layer);
         const collected = this.layerSamples[index] || new Set();
         this.currentNoteTitle.setText(
-            `FIELD NOTE ${String(index + 1).padStart(2, "0")}/10\n${layer.name}`
+            `${String(index + 1).padStart(2, "0")}/10  ${layer.name}`
         );
+        const shortLabels = {
+            AGE: "AGE",
+            ROCK: "ROCK",
+            FIELD: "LOOK",
+            ENV: "FORMED",
+            LIFE: "LIFE",
+            EVENT: "EVENT"
+        };
         this.currentNoteBody.setText(evidence.map((clue, clueIndex) => {
             const marker = collected.has(clueIndex) ? "✓" : "○";
-            const type = String(clue?.type || "NOTE").padEnd(5, " ");
+            const type = shortLabels[clue?.type] || "NOTE";
             const note = clue?.note || clue?.text || "Field evidence unavailable.";
-            return `${marker} ${type}  ${note}`;
+            return `${marker} ${type} · ${note}`;
         }).join("\n"));
         this.currentNoteHint.setText(
-            `${collected.size}/5 • EACH SAMPLE: +100 SCORE + CREDITS`
+            `${collected.size}/5 • +100 SCORE + CREDITS EACH`
         );
     }
 

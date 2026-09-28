@@ -1,4 +1,4 @@
-import { ROCK_LAYERS } from "../data/layers.js";
+import { ROCK_LAYERS } from "../data/layers.js?v=4.6.3";
 import { GAME_FONT } from "../core/theme.js?v=4.6.1";
 
 const Phaser = window.Phaser;
@@ -173,29 +173,25 @@ export class LayerNotebookOverlay {
 
         if (!available) {
             this.layerTitle.setText("LOCKED STRATUM");
-            this.body.setText(
-                "This entry has not been observed yet.\n\n" +
-                "Launch the drill, protect its energy, and reach this depth to add the evidence to your field notebook."
-            );
-            this.sourceText.setText("Scientific details remain hidden until discovery.");
+            this.body.setText("Reach this layer to unlock its field note.");
+            this.sourceText.setText("Not yet observed.");
             return;
         }
 
         this.layerTitle.setText(`${layer.name}  •  ${layer.ma.toLocaleString()} Ma`);
         const sections = [
-            `${layer.group}  |  ${layer.age}`,
-            `POSITION\n${layer.position}`,
+            `${layer.age}  •  ${layer.group}`,
+            `WHERE\n${layer.position}`,
             `ROCK\n${layer.rockType}`,
-            `OBSERVATION\n${layer.observation}`,
-            `INTERPRETATION\n${layer.interpretation}`,
-            `FOSSIL EVIDENCE\n${layer.fossil}`,
+            `LOOK FOR\n${layer.feature}`,
+            `FORMED\n${layer.formed}`,
+            `LIFE / EVENT\n${layer.fossil}`,
             `WHY IT MATTERS\n${layer.significance}`
         ];
         if (layer.boundary) sections.push(`IMPORTANT LIMIT\n${layer.boundary}`);
         this.body.setText(sections.join("\n\n"));
         this.sourceText.setText(
-            `${layer.source}\n` +
-            "FACT: geology and ages.  GAME: colors, equal thickness, drilling physics, and selected-unit order."
+            `${layer.source}  •  Game scale and physics are simplified.`
         );
     }
 }

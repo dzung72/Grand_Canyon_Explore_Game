@@ -9,8 +9,8 @@ export class LayerBriefingOverlay {
         this.items = [];
         this.timer = null;
         this.startedAt = 0;
-        this.duration = 5500;
-        this.minimumSkipDelay = 1000;
+        this.duration = 4000;
+        this.minimumSkipDelay = 700;
         this.onComplete = null;
         this.isOpen = false;
     }
@@ -69,7 +69,7 @@ export class LayerBriefingOverlay {
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(102));
 
         this.add(this.scene.add.text(centerX, top + (compact ? 92 : 98),
-            `${layer.age}  •  ~${layer.ma.toLocaleString()} Ma\n${layer.rockType}\n\n${challenge.name}: ${challenge.briefing}`,
+            `~${layer.ma.toLocaleString()} Ma  •  ${layer.rockType}\n\n${challenge.name}\n${challenge.tip}`,
             {
                 fontFamily: font,
                 fontSize: compact ? "16px" : "20px",
@@ -81,7 +81,7 @@ export class LayerBriefingOverlay {
         ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(102));
 
         this.countdown = this.add(this.scene.add.text(centerX, top + panelHeight - 42,
-            "CONTINUE IN 5.5s  •  click after 1s to skip",
+            "AUTO 4.0s  •  click to continue",
             {
                 fontFamily: font,
                 fontSize: compact ? "14px" : "16px",

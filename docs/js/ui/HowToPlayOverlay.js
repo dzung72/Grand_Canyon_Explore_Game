@@ -17,7 +17,7 @@ export class HowToPlayOverlay {
         const height = this.scene.viewHeight;
         const compact = width < 700 || height < 650;
         const panelWidth = Math.min(width - 28, 860);
-        const panelHeight = Math.min(height - 28, compact ? 560 : 650);
+        const panelHeight = Math.min(height - 28, compact ? 500 : 540);
         const centerX = width / 2;
         const top = (height - panelHeight) / 2;
         const font = GAME_FONT;
@@ -61,41 +61,31 @@ export class HowToPlayOverlay {
         ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(152));
 
         const instructions = [
-            ["1  LAUNCH", "Grab the drill, pull upward and release."],
-            ["2  STEER", "Use WASD, arrow keys, or touch. Explore in four directions."],
-            ["3  COLLECT", "Find all five evidence samples in every rock layer."],
-            ["4  ROCK CHECK", "Touch a quiz rock and answer using the field note you read."],
-            ["5  FUEL + BOOST", "Fuel cans restore up to 25%. Hold Space/BOOST for 2.15× speed, but lose an extra 8% fuel per second."],
-            ["6  NEAR MISS", "Sweep past a rock without touching it. Speed stays normal, a whoosh confirms the dodge, and chains reach x4."]
+            ["1  LAUNCH", "Pull up. Release."],
+            ["2  MOVE", "WASD, arrows, or touch."],
+            ["3  GOAL", "Collect 5 samples per layer."],
+            ["4  ROCK", "Hit one? Answer from the note."],
+            ["5  FUEL", "Cans give 25%. Boost is fast but drains fuel."],
+            ["6  NEAR MISS", "Pass close without contact. Chain up to x4."]
         ];
-        const body = compact
-            ? instructions.map(([title, text]) => `${title}: ${text}`).join("\n")
-            : instructions.map(([title, text]) => `${title}\n${text}`).join("\n\n");
-        this.add(this.scene.add.text(
-            centerX - panelWidth / 2 + (compact ? 20 : 42),
-            top + (compact ? 92 : 112),
-            body,
-            {
+        const addInstructions = (items, x, y, textWidth) => {
+            const body = items.map(([title, text]) => `${title} — ${text}`).join("\n\n");
+            this.add(this.scene.add.text(x, y, body, {
                 fontFamily: font,
                 fontSize: compact ? "13px" : "17px",
                 fontStyle: "normal",
                 color: "#eaf2f8",
                 lineSpacing: compact ? 5 : 7,
-                wordWrap: { width: panelWidth - (compact ? 40 : 84), useAdvancedWrap: true }
-            }
-        ).setScrollFactor(0).setDepth(152));
-
-        this.add(this.scene.add.text(centerX, top + panelHeight - (compact ? 84 : 92),
-            "RUN TIME + LAYER TIME pause during notes, quizzes and upgrades.",
-            {
-                fontFamily: font,
-                fontSize: compact ? "13px" : "16px",
-                fontStyle: "bold",
-                color: "#91eadc",
-                align: "center",
-                wordWrap: { width: panelWidth - 36, useAdvancedWrap: true }
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(152));
+                wordWrap: { width: textWidth, useAdvancedWrap: true }
+            }).setScrollFactor(0).setDepth(152));
+        };
+        if (compact) {
+            addInstructions(instructions, centerX - panelWidth / 2 + 20, top + 92, panelWidth - 40);
+        } else {
+            const columnWidth = (panelWidth - 108) / 2;
+            addInstructions(instructions.slice(0, 3), centerX - panelWidth / 2 + 42, top + 122, columnWidth);
+            addInstructions(instructions.slice(3), centerX + 24, top + 122, columnWidth);
+        }
 
         const startButton = this.scene.add.text(centerX, top + panelHeight - 42,
             "[ START EXPEDITION ]",
