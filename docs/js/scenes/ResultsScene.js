@@ -1,4 +1,4 @@
-import { ROCK_LAYERS } from "../data/layers.js?v=5.1.2";
+import { ROCK_LAYERS } from "../data/layers.js?v=5.1.3";
 import {
     database,
     storageAvailable,
@@ -10,11 +10,11 @@ import {
     saveDatabase,
     totalStars,
     collectionCount
-} from "../services/storage.js?v=5.1.2";
-import { pixelButton } from "../ui/components.js?v=5.1.2";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=5.1.2";
-import { retroMusic } from "../services/AudioManager.js?v=5.1.2";
-import { GAME_FONT } from "../core/theme.js?v=5.1.2";
+} from "../services/storage.js?v=5.1.3";
+import { pixelButton } from "../ui/components.js?v=5.1.3";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=5.1.3";
+import { retroMusic } from "../services/AudioManager.js?v=5.1.3";
+import { GAME_FONT } from "../core/theme.js?v=5.1.3";
 
 const Phaser = window.Phaser;
 
@@ -109,7 +109,7 @@ export class ResultsScene extends Phaser.Scene {
             `STARS           ${totalStars()}/${ROCK_LAYERS.length * 3}`,
             `GATES           ${this.runData.correctAnswers || 0} right  •  ${this.runData.wrongAnswers || 0} wrong`,
             `NEAR MISS       ${this.runData.nearMisses || 0}  •  BEST x${this.runData.bestNearMissCombo || 0}`,
-            `UPGRADES        SPD ${this.runData.upgrades?.speed || 0}  MAG ${this.runData.upgrades?.magnet || 0}  PAY ${this.runData.upgrades?.earnings || 0}`,
+            `UPGRADES        SPD ${this.runData.upgrades?.speed || 0}  MAG ${this.runData.upgrades?.magnet || 0}  FUEL ${this.runData.upgrades?.efficiency || 0}`,
             `DEEPEST LAYER   ${deepest}`
         ].join("\n");
 

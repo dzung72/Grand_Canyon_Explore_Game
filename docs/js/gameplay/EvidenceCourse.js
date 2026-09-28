@@ -1,6 +1,6 @@
-import { ROCK_LAYERS, getLayerEvidence } from "../data/layers.js?v=5.1.2";
-import { getLayerChallenge } from "./layerChallenges.js?v=5.1.2";
-import { GAME_FONT } from "../core/theme.js?v=5.1.2";
+import { ROCK_LAYERS, getLayerEvidence } from "../data/layers.js?v=5.1.3";
+import { getLayerChallenge } from "./layerChallenges.js?v=5.1.3";
+import { GAME_FONT } from "../core/theme.js?v=5.1.3";
 
 const Phaser = window.Phaser;
 
@@ -734,6 +734,43 @@ export class EvidenceCourse {
         return this.samples.find((sample) =>
             sample.active && Phaser.Geom.Intersects.RectangleToRectangle(drillBounds, sample.bounds)
         );
+    }
+
+    attractCollectibles(drillX, drillY, layerIndex, magnetLevel, delta) {
+        if (magnetLevel <= 0) return { count: 0, radius: 0 };
+        const radius = 90 + (magnetLevel - 1) * 30;
+        const dt = Math.min(delta / 1000, 0.05);
+        const pullSpeed = 210 + magnetLevel * 45;
+        let count = 0;
+
+        const attract = (item, isFuel = false) => {
+            if (!item.active || item.layerIndex !== layerIndex) return;
+            const dx = drillX - item.x;
+            const dy = drillY - item.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance <= 1 || distance > radius) return;
+
+            if (isFuel && !item.magnetized) {
+                // Fuel cans normally bob vertically. Stop that tween once the
+                // magnet takes over so it cannot fight the pull motion.
+                this.scene.tweens.killTweensOf(item.graphic);
+                item.magnetized = true;
+            }
+            const proximity = 1 - distance / radius;
+            const step = Math.min(distance, pullSpeed * (0.65 + proximity * 0.75) * dt);
+            item.x += dx / distance * step;
+            item.y += dy / distance * step;
+            item.graphic.setPosition(item.x, item.y);
+            item.bounds.setPosition(
+                item.x - item.bounds.width / 2,
+                item.y - item.bounds.height / 2
+            );
+            count += 1;
+        };
+
+        this.samples.forEach((sample) => attract(sample));
+        this.fuelCans.forEach((fuelCan) => attract(fuelCan, true));
+        return { count, radius };
     }
 
     findFuelCollision(drillX, drillY, radius = 34) {

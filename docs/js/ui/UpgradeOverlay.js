@@ -1,4 +1,4 @@
-import { GAME_FONT } from "../core/theme.js?v=5.1.2";
+import { GAME_FONT } from "../core/theme.js?v=5.1.3";
 
 export class UpgradeOverlay {
     constructor(scene, getPlayWidth) {
@@ -57,8 +57,13 @@ export class UpgradeOverlay {
         // Thẻ có bề rộng cố định; mô tả phải ngắn để không bị cắt mất chữ.
         const descriptions = {
             speed: "+25% move speed",
-            magnet: "+20px reach",
-            earnings: "+25% credits"
+            magnet: "+30px pull range",
+            efficiency: "−15% fuel drain"
+        };
+        const titles = {
+            speed: "SPEED",
+            magnet: "MAGNET",
+            efficiency: "FUEL SAVER"
         };
         choices.forEach((choice, index) => {
             const cardWidth = compact ? panelWidth - 36 : (panelWidth - 64) / 3;
@@ -67,7 +72,7 @@ export class UpgradeOverlay {
             const button = this.scene.add.text(
                 x,
                 y,
-                `${choice.type.toUpperCase()}  LV ${upgrades[choice.type]}\n${descriptions[choice.type]}\n${choice.cost} CREDITS`,
+                `${titles[choice.type]}  LV ${upgrades[choice.type]}\n${descriptions[choice.type]}\n${choice.cost} CREDITS`,
                 {
                     fontFamily: font,
                     fontSize: compact ? "16px" : "18px",

@@ -2,7 +2,7 @@
 // chạm không để lộ nền trống.
 export const WORLD_BLEED = 48;
 
-import { ROCK_LAYERS } from "../data/layers.js?v=5.1.2";
+import { ROCK_LAYERS } from "../data/layers.js?v=5.1.3";
 
 const Phaser = window.Phaser;
 

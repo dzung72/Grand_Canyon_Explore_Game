@@ -1,6 +1,6 @@
-import { ROCK_LAYERS } from "../data/layers.js?v=5.1.2";
-import { collectionCount } from "../services/storage.js?v=5.1.2";
-import { GAME_FONT } from "../core/theme.js?v=5.1.2";
+import { ROCK_LAYERS } from "../data/layers.js?v=5.1.3";
+import { collectionCount } from "../services/storage.js?v=5.1.3";
+import { GAME_FONT } from "../core/theme.js?v=5.1.3";
 
 const Phaser = window.Phaser;
 

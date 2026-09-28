@@ -1,5 +1,5 @@
-import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=5.1.2";
-import { storyFor, timeGapFor } from "../data/story.js?v=5.1.2";
+import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=5.1.3";
+import { storyFor, timeGapFor } from "../data/story.js?v=5.1.3";
 import {
     database,
     currentRecord,
@@ -12,22 +12,22 @@ import {
     recordLayerStars,
     markSampleFound,
     collectionCount
-} from "../services/storage.js?v=5.1.2";
-import { makeDrill } from "../ui/components.js?v=5.1.2";
-import { showStatus } from "../core/status.js?v=5.1.2";
-import { GAME_FONT, UI } from "../core/theme.js?v=5.1.2";
-import { ExpeditionWorld, WORLD_BLEED } from "../world/ExpeditionWorld.js?v=5.1.2";
-import { ImpactEffects } from "../effects/ImpactEffects.js?v=5.1.2";
-import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=5.1.2";
-import { getLayerChallenge } from "../gameplay/layerChallenges.js?v=5.1.2";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=5.1.2";
-import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=5.1.2";
-import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=5.1.2";
-import { QuizOverlay } from "../ui/QuizOverlay.js?v=5.1.2";
-import { TimeGapOverlay } from "../ui/TimeGapOverlay.js?v=5.1.2";
-import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=5.1.2";
-import { StartMenuOverlay } from "../ui/StartMenuOverlay.js?v=5.1.2";
-import { retroMusic } from "../services/AudioManager.js?v=5.1.2";
+} from "../services/storage.js?v=5.1.3";
+import { makeDrill } from "../ui/components.js?v=5.1.3";
+import { showStatus } from "../core/status.js?v=5.1.3";
+import { GAME_FONT, UI } from "../core/theme.js?v=5.1.3";
+import { ExpeditionWorld, WORLD_BLEED } from "../world/ExpeditionWorld.js?v=5.1.3";
+import { ImpactEffects } from "../effects/ImpactEffects.js?v=5.1.3";
+import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=5.1.3";
+import { getLayerChallenge } from "../gameplay/layerChallenges.js?v=5.1.3";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=5.1.3";
+import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=5.1.3";
+import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=5.1.3";
+import { QuizOverlay } from "../ui/QuizOverlay.js?v=5.1.3";
+import { TimeGapOverlay } from "../ui/TimeGapOverlay.js?v=5.1.3";
+import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=5.1.3";
+import { StartMenuOverlay } from "../ui/StartMenuOverlay.js?v=5.1.3";
+import { retroMusic } from "../services/AudioManager.js?v=5.1.3";
 
 const Phaser = window.Phaser;
 
@@ -77,7 +77,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.credits = 0;
         this.correctAnswers = 0;
         this.wrongAnswers = 0;
-        this.upgrades = { speed: 0, magnet: 0, earnings: 0 };
+        this.upgrades = { speed: 0, magnet: 0, efficiency: 0 };
         this.activeElapsedMs = 0;
         this.layerElapsedMs = 0;
         this.energyDrainFlashAt = 0;
@@ -147,6 +147,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.createInterface();
         this.layoutTopButtons();
         this.comboGlow = this.add.graphics().setScrollFactor(0).setDepth(94);
+        this.magnetGlow = this.add.graphics().setDepth(7);
         this.createDeepTimeGauge();
         this.notebook = new LayerNotebookOverlay(this, () => currentRecord().discovered);
         this.layerBriefing = new LayerBriefingOverlay(this, () => this.playAreaRight || this.viewWidth);
@@ -731,6 +732,17 @@ export class ExpeditionScene extends Phaser.Scene {
         );
     }
 
+    drawMagnetGlow(radius, active, time) {
+        this.magnetGlow.clear();
+        if (!active || radius <= 0) return;
+        const pulse = 0.72 + Math.sin(time * 0.012) * 0.16;
+        this.magnetGlow
+            .lineStyle(3, 0x66e0cf, pulse * 0.5)
+            .strokeCircle(this.drill.x, this.drill.y, radius)
+            .lineStyle(2, 0xf7fbff, pulse * 0.32)
+            .strokeCircle(this.drill.x, this.drill.y, Math.max(38, radius * 0.42));
+    }
+
     // Chuyển tầng: một dải đá quét ngang màn hình theo màu của tầng mới.
     playLayerWipe(layer) {
         const height = Math.max(120, this.viewHeight * 0.32);
@@ -1176,8 +1188,10 @@ export class ExpeditionScene extends Phaser.Scene {
             this.showHintOnce("boost", "HOLD SPACE TO BOOST");
         }
         this.drill.setScale(boosting ? 1.1 : 1);
+        const fuelDrainMultiplier = 0.85 ** this.upgrades.efficiency;
+        const boostDrainPercent = (6 * fuelDrainMultiplier).toFixed(1);
         this.boostButton
-            .setText(boosting ? "[ BOOST • FUEL −6%/s ]" : "[ BOOST • SPACE ]")
+            .setText(boosting ? `[ BOOST • FUEL −${boostDrainPercent}%/s ]` : "[ BOOST • SPACE ]")
             .setColor(boosting ? "#f7fbff" : "#101923")
             .setBackgroundColor(boosting ? "#c44437" : "#ffd166");
         const passFactor = knownLayer ? (this.usesShaft ? 0.55 : 0.78) : 1;
@@ -1231,9 +1245,11 @@ export class ExpeditionScene extends Phaser.Scene {
         this.pendingTapDistance = 0;
         const fuelConsumptionMultiplier = 4.5;
         this.energy -= layer.resistance * passFactor *
-            (travelDistance / (this.layerHeight * 15)) * fuelConsumptionMultiplier;
+            (travelDistance / (this.layerHeight * 15)) * fuelConsumptionMultiplier *
+            fuelDrainMultiplier;
         if (boosting) {
-            this.energy -= this.energyMax * 0.06 * Math.min(delta / 1000, 0.05);
+            this.energy -= this.energyMax * 0.06 * fuelDrainMultiplier *
+                Math.min(delta / 1000, 0.05);
         }
         if (environment.energyHitKey && !this.triggeredEnergyHazards.has(environment.energyHitKey)) {
             this.triggeredEnergyHazards.add(environment.energyHitKey);
@@ -1251,18 +1267,25 @@ export class ExpeditionScene extends Phaser.Scene {
         // Sắp cạn nhiên liệu thì nhạc nhanh lên và dày hat — hồi hộp mà không cần chữ.
         retroMusic.setIntensity(this.energy / this.energyMax < 0.25 ? 3 : 2);
 
-        const magnetRadius = 33 + this.upgrades.magnet * 20;
+        const magnetPull = this.evidenceCourse.attractCollectibles(
+            this.drill.x,
+            this.drill.y,
+            layerIndex,
+            this.upgrades.magnet,
+            delta
+        );
+        this.drawMagnetGlow(magnetPull.radius, magnetPull.count > 0, time);
         const sample = this.evidenceCourse.findSampleCollision(
             this.drill.x,
             this.drill.y,
-            magnetRadius
+            33
         );
         if (sample) this.collectEvidence(sample, time);
 
         const fuelCan = this.evidenceCourse.findFuelCollision(
             this.drill.x,
             this.drill.y,
-            34 + this.upgrades.magnet * 8
+            34
         );
         if (fuelCan) this.collectFuel(fuelCan, time);
 
@@ -1368,6 +1391,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.drill.setScale(1);
         this.boostButton.setVisible(false);
         this.comboGlow?.clear();
+        this.magnetGlow?.clear();
         retroMusic.effect("bump");
         retroMusic.setMotor(false);
         retroMusic.setAmbience(false);
@@ -1506,7 +1530,7 @@ export class ExpeditionScene extends Phaser.Scene {
         collected.add(sample.clueIndex);
         markSampleFound(sample.layerIndex, sample.clueIndex);
         this.score += 100;
-        const creditGain = Math.round(50 * (1 + this.upgrades.earnings * 0.25));
+        const creditGain = 50;
         this.credits += creditGain;
         retroMusic.effect("collect");
         this.collectedSecrets.push({
@@ -1582,6 +1606,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
     completeLayer(index) {
         if (this.completedLayers.has(index)) return;
+        this.magnetGlow.clear();
         this.completedLayers.add(index);
         const layer = ROCK_LAYERS[index];
         const stars = this.scoreLayerStars(index);
@@ -1641,7 +1666,7 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     openUpgradeShop(index, layer, stars = 1) {
-        const choices = ["speed", "magnet", "earnings"].map((type) => {
+        const choices = ["speed", "magnet", "efficiency"].map((type) => {
             const cost = this.upgradeCost(type);
             return {
                 type,
@@ -1672,7 +1697,9 @@ export class ExpeditionScene extends Phaser.Scene {
             retroMusic.effect("upgrade");
             const upgradeMessage = type === "speed"
                 ? `SPEED LV ${this.upgrades.speed} • ${Math.round((1 + this.upgrades.speed * 0.25) * 100)}% MOVE`
-                : `${type.toUpperCase()} UPGRADED`;
+                : type === "efficiency"
+                    ? `FUEL SAVE LV ${this.upgrades.efficiency} • −${Math.round((1 - 0.85 ** this.upgrades.efficiency) * 100)}% DRAIN`
+                    : `${type.toUpperCase()} UPGRADED`;
             this.showScreenPopup(upgradeMessage, "#ffd166");
         }
         this.upgradeOverlay.close();
@@ -1950,6 +1977,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.wasBoosting = false;
         this.drill.setScale(1);
         this.boostButton.setVisible(false);
+        this.magnetGlow.clear();
         retroMusic.setMotor(false);
         retroMusic.setAmbience(false);
         this.energy = Math.max(0, this.energy);

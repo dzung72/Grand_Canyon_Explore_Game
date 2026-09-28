@@ -1,6 +1,6 @@
-import { GAME_FONT, UI } from "../core/theme.js?v=5.1.2";
-import { makePanelButton, pinToScreen } from "./components.js?v=5.1.2";
-import { retroMusic } from "../services/AudioManager.js?v=5.1.2";
+import { GAME_FONT, UI } from "../core/theme.js?v=5.1.3";
+import { makePanelButton, pinToScreen } from "./components.js?v=5.1.3";
+import { retroMusic } from "../services/AudioManager.js?v=5.1.3";
 
 const Phaser = window.Phaser;
 

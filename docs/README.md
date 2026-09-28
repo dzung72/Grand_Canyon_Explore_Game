@@ -9,7 +9,7 @@ A small educational Phaser game about exploring ten representative rock units ex
 3. Release the drill.
 4. After impact, move freely in four directions with `WASD`, arrow keys, or the four sides of a touch screen.
 5. Use the permanent field note on the right while collecting five glowing samples: age, rock, field feature, environment, and life/event.
-6. Each sample gives 100 score and credits. A fuel can restores up to 25% energy. Layers 1–2 contain one can each; layers 3–10 contain two cans spaced across the route. Base movement fuel drain is reduced by 25% from the previous build, and Boost drain drops from 8% to 6% of the full tank per second. Each Speed level adds a clearly visible 25% movement increase; Magnet and Earnings upgrades also improve the current run.
+6. Each sample gives 100 score and 50 credits. A fuel can restores up to 25% energy. Layers 1–2 contain one can each; layers 3–10 contain two cans spaced across the route. Base movement fuel drain is reduced by 25% from the previous build, and Boost drain starts at 6% of the full tank per second. Each Speed level adds 25% movement speed. Magnet begins with a 90-pixel pull field and adds 30 pixels per level, drawing nearby samples and fuel toward the drill. Each Fuel Saver level multiplies movement and Boost drain by 0.85 for the current run.
 7. A story briefing introduces each layer and stays open until the player selects `CONTINUE`; the button becomes available after 0.7 seconds and the five-line note remains visible.
 8. Hitting one of four sparse rocks pauses the drill and asks a three-choice question taken directly from the visible note.
 9. A correct answer gives 50 score; a wrong answer removes 100 score and slows the drill for two seconds.
