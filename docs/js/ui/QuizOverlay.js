@@ -18,7 +18,7 @@ export class QuizOverlay {
         const height = this.scene.viewHeight;
         const compact = width < 560;
         const panelWidth = Math.min(width - 28, compact ? 430 : 650);
-        const panelHeight = compact ? 405 : 430;
+        const panelHeight = compact ? 445 : 470;
         const centerX = width / 2;
         const top = Math.max(84, (height - panelHeight) / 2);
         const font = GAME_FONT;
@@ -29,28 +29,28 @@ export class QuizOverlay {
             .setStrokeStyle(4, 0xffa044, 1).setScrollFactor(0).setDepth(81));
         this.add(this.scene.add.text(centerX, top + 24, "ROCK CHECK", {
             fontFamily: font,
-            fontSize: compact ? "25px" : "32px",
+            fontSize: compact ? "28px" : "36px",
             fontStyle: "bold",
             color: "#ffd166"
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
         this.add(this.scene.add.text(centerX, top + 68, quiz.question, {
             fontFamily: font,
-            fontSize: compact ? "17px" : "21px",
+            fontSize: compact ? "19px" : "23px",
             fontStyle: "bold",
             color: "#f7fbff",
             align: "center",
             wordWrap: { width: panelWidth - 46, useAdvancedWrap: true }
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
 
-        const buttonTop = top + 135;
+        const buttonTop = top + 145;
         const answerButtons = quiz.answers.map((answer, index) => {
-            const button = this.scene.add.text(centerX, buttonTop + index * 66, `${index + 1}. ${answer.text}`, {
+            const button = this.scene.add.text(centerX, buttonTop + index * 72, `${index + 1}. ${answer.text}`, {
                 fontFamily: font,
-                fontSize: compact ? "15px" : "18px",
+                fontSize: compact ? "17px" : "20px",
                 fontStyle: "bold",
                 color: "#101923",
                 backgroundColor: "#f7fbff",
-                padding: { x: 13, y: 10 },
+                padding: { x: 15, y: 12 },
                 fixedWidth: panelWidth - 46,
                 align: "left",
                 wordWrap: { width: panelWidth - 72, useAdvancedWrap: true }
@@ -62,7 +62,7 @@ export class QuizOverlay {
 
         const unknown = this.scene.add.text(centerX, top + panelHeight - 42, "[ I DON'T KNOW ]", {
             fontFamily: font,
-            fontSize: compact ? "15px" : "18px",
+            fontSize: compact ? "17px" : "20px",
             fontStyle: "bold",
             color: "#ffb49f"
         }).setOrigin(0.5).setScrollFactor(0).setDepth(82).setInteractive({ useHandCursor: true });

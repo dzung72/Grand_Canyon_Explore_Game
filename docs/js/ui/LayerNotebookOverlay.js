@@ -62,20 +62,20 @@ export class LayerNotebookOverlay {
 
         this.heading = this.scene.add.text(left + 20, top + 18, "FIELD NOTEBOOK", {
             fontFamily: font,
-            fontSize: compact ? "22px" : "30px",
+            fontSize: compact ? "24px" : "34px",
             fontStyle: "bold",
             color: "#ffd166"
         });
 
         this.pageText = this.scene.add.text(left + panelWidth - 20, top + 23, "", {
             fontFamily: font,
-            fontSize: compact ? "14px" : "16px",
+            fontSize: compact ? "16px" : "18px",
             color: "#91eadc"
         }).setOrigin(1, 0);
 
         this.layerTitle = this.scene.add.text(left + 20, top + (compact ? 58 : 66), "", {
             fontFamily: font,
-            fontSize: compact ? "18px" : "24px",
+            fontSize: compact ? "20px" : "27px",
             fontStyle: "bold",
             color: "#f7fbff",
             wordWrap: { width: panelWidth - 40 }
@@ -83,15 +83,15 @@ export class LayerNotebookOverlay {
 
         this.body = this.scene.add.text(left + 20, top + (compact ? 98 : 112), "", {
             fontFamily: font,
-            fontSize: compact ? "14px" : "17px",
+            fontSize: compact ? "16px" : "19px",
             color: "#eaf2f8",
-            lineSpacing: compact ? 5 : 8,
+            lineSpacing: compact ? 8 : 11,
             wordWrap: { width: panelWidth - 40, useAdvancedWrap: true }
         });
 
         this.sourceText = this.scene.add.text(left + 20, top + panelHeight - (compact ? 68 : 78), "", {
             fontFamily: font,
-            fontSize: compact ? "12px" : "14px",
+            fontSize: compact ? "14px" : "16px",
             color: "#b8cadd",
             wordWrap: { width: panelWidth - 40 }
         });
@@ -103,7 +103,7 @@ export class LayerNotebookOverlay {
             buttonY,
             "PREV",
             () => this.changePage(-1),
-            compact ? "13px" : "16px"
+            compact ? "15px" : "18px"
         );
         const close = makeButton(
             this.scene,
@@ -111,7 +111,7 @@ export class LayerNotebookOverlay {
             buttonY,
             "CLOSE",
             () => this.close(),
-            compact ? "13px" : "16px"
+            compact ? "15px" : "18px"
         );
         const next = makeButton(
             this.scene,
@@ -119,7 +119,7 @@ export class LayerNotebookOverlay {
             buttonY,
             "NEXT",
             () => this.changePage(1),
-            compact ? "13px" : "16px"
+            compact ? "15px" : "18px"
         );
 
         this.elements = [

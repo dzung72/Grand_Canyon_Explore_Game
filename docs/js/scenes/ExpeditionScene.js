@@ -1,17 +1,17 @@
 import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=4.6.3";
 import { database, currentRecord, formatRunTime, saveDatabase } from "../services/storage.js?v=4.4.0";
-import { makeDrill } from "../ui/components.js?v=4.6.1";
+import { makeDrill } from "../ui/components.js?v=4.6.4";
 import { showStatus } from "../core/status.js";
 import { GAME_FONT } from "../core/theme.js?v=4.6.1";
 import { ExpeditionWorld } from "../world/ExpeditionWorld.js";
 import { ImpactEffects } from "../effects/ImpactEffects.js?v=4.4.0";
-import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=4.6.3";
+import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=4.6.4";
 import { getLayerChallenge } from "../gameplay/layerChallenges.js?v=4.6.3";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.3";
-import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=4.6.3";
-import { QuizOverlay } from "../ui/QuizOverlay.js?v=4.6.1";
-import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=4.6.1";
-import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=4.6.3";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.4";
+import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=4.6.4";
+import { QuizOverlay } from "../ui/QuizOverlay.js?v=4.6.4";
+import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=4.6.4";
+import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=4.6.4";
 import { retroMusic } from "../services/AudioManager.js?v=4.6.1";
 
 const Phaser = window.Phaser;
@@ -137,7 +137,7 @@ export class ExpeditionScene extends Phaser.Scene {
             this.viewWidth < 650 ? "GC DRILL // V4.6" : "GRAND CANYON DRILL // V4.6",
             {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "18px" : "28px",
+            fontSize: this.viewWidth < 650 ? "20px" : "30px",
             fontStyle: "bold",
             color: "#f7fbff",
             shadow
@@ -145,13 +145,13 @@ export class ExpeditionScene extends Phaser.Scene {
         ).setScrollFactor(0).setDepth(40);
         this.progressText = this.add.text(20, 52, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "13px" : "16px",
+            fontSize: this.viewWidth < 650 ? "15px" : "18px",
             color: "#ffd166",
             shadow
         }).setScrollFactor(0).setDepth(40);
         this.helpText = this.add.text(this.viewWidth / 2, this.viewHeight - 28, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "14px" : "18px",
+            fontSize: this.viewWidth < 650 ? "16px" : "20px",
             fontStyle: "bold",
             color: "#f7fbff",
             backgroundColor: "#142330f2",
@@ -162,7 +162,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.powerGraphics = this.add.graphics().setScrollFactor(0).setDepth(40);
         this.powerText = this.add.text(0, 0, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "13px" : "16px",
+            fontSize: this.viewWidth < 650 ? "15px" : "18px",
             fontStyle: "bold",
             color: "#f7fbff",
             shadow
@@ -170,7 +170,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
         this.fullscreenButton = this.add.text(this.viewWidth - 16, 16, "[ FULLSCREEN ]", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "13px" : "16px",
+            fontSize: this.viewWidth < 650 ? "15px" : "18px",
             fontStyle: "bold",
             color: "#f7fbff",
             backgroundColor: "#1b2b39f2",
@@ -187,7 +187,7 @@ export class ExpeditionScene extends Phaser.Scene {
             `[ ${retroMusic.label()} ]`,
             {
                 fontFamily: font,
-                fontSize: this.viewWidth < 650 ? "12px" : "15px",
+                fontSize: this.viewWidth < 650 ? "14px" : "17px",
                 fontStyle: "bold",
                 color: "#101923",
                 backgroundColor: "#91eadc",
@@ -206,7 +206,7 @@ export class ExpeditionScene extends Phaser.Scene {
             `[ ${retroMusic.sfxLabel()} ]`,
             {
                 fontFamily: font,
-                fontSize: this.viewWidth < 650 ? "12px" : "15px",
+                fontSize: this.viewWidth < 650 ? "14px" : "17px",
                 fontStyle: "bold",
                 color: "#101923",
                 backgroundColor: "#ffd166",
@@ -225,7 +225,7 @@ export class ExpeditionScene extends Phaser.Scene {
             "[ FIELD NOTES ]",
             {
                 fontFamily: font,
-                fontSize: this.viewWidth < 650 ? "12px" : "15px",
+                fontSize: this.viewWidth < 650 ? "14px" : "17px",
                 fontStyle: "bold",
                 color: "#91eadc",
                 backgroundColor: "#1b2b39f2",
@@ -239,7 +239,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
         this.impactText = this.add.text(this.viewWidth / 2, this.viewHeight * 0.37, "SURFACE BREACH!", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "18px" : "28px",
+            fontSize: this.viewWidth < 650 ? "22px" : "32px",
             fontStyle: "bold",
             color: "#f7fbff",
             backgroundColor: "#13222ff2",
@@ -253,14 +253,14 @@ export class ExpeditionScene extends Phaser.Scene {
             .setOrigin(0).setScrollFactor(0).setDepth(35).setVisible(false);
         this.drillHudText = this.add.text(16, 12, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "14px" : "17px",
+            fontSize: this.viewWidth < 650 ? "16px" : "19px",
             fontStyle: "bold",
             color: "#f7fbff",
-            lineSpacing: 4
+            lineSpacing: 7
         }).setScrollFactor(0).setDepth(36).setVisible(false);
         this.economyText = this.add.text(0, 12, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "15px" : "19px",
+            fontSize: this.viewWidth < 650 ? "17px" : "21px",
             fontStyle: "bold",
             color: "#ffd166",
             align: "right"
@@ -270,7 +270,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
         this.layerBanner = this.add.text(this.viewWidth / 2, 96, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "15px" : "20px",
+            fontSize: this.viewWidth < 650 ? "17px" : "22px",
             fontStyle: "bold",
             color: "#f7fbff",
             align: "center",
@@ -284,11 +284,11 @@ export class ExpeditionScene extends Phaser.Scene {
 
         const compact = this.viewWidth < 720;
         const noteWidth = compact
-            ? Math.min(240, this.viewWidth * 0.46)
-            : Math.min(380, this.viewWidth * 0.3);
+            ? Math.min(270, this.viewWidth * 0.48)
+            : Math.min(420, this.viewWidth * 0.32);
         const noteLeft = this.viewWidth - noteWidth - 14;
         const noteTop = 96;
-        const noteHeight = Math.min(430, this.viewHeight - noteTop - 24);
+        const noteHeight = Math.min(450, this.viewHeight - noteTop - 24);
         this.noteLeft = noteLeft;
         this.noteWidth = noteWidth;
         this.playAreaRight = Math.max(138, noteLeft - 18);
@@ -303,16 +303,16 @@ export class ExpeditionScene extends Phaser.Scene {
         ).setOrigin(0).setStrokeStyle(3, 0x66e0cf, 1).setScrollFactor(0).setDepth(38).setVisible(false);
         this.currentNoteTitle = this.add.text(noteLeft + 13, noteTop + 11, "", {
             fontFamily: font,
-            fontSize: compact ? "16px" : "20px",
+            fontSize: compact ? "18px" : "22px",
             fontStyle: "bold",
             color: "#f7fbff",
             wordWrap: { width: noteWidth - 26, useAdvancedWrap: true }
         }).setScrollFactor(0).setDepth(39).setVisible(false);
         this.currentNoteBody = this.add.text(noteLeft + 13, noteTop + (compact ? 48 : 52), "", {
             fontFamily: font,
-            fontSize: compact ? "16px" : "18px",
+            fontSize: compact ? "18px" : "20px",
             color: "#eaf2f8",
-            lineSpacing: compact ? 6 : 8,
+            lineSpacing: compact ? 9 : 11,
             wordWrap: { width: noteWidth - 26, useAdvancedWrap: true }
         }).setScrollFactor(0).setDepth(39).setVisible(false);
         this.currentNoteHint = this.add.text(
@@ -321,7 +321,7 @@ export class ExpeditionScene extends Phaser.Scene {
             "Collect a sample to reveal its field note.",
             {
                 fontFamily: font,
-                fontSize: compact ? "14px" : "15px",
+                fontSize: compact ? "16px" : "17px",
                 fontStyle: "italic",
                 color: "#91eadc",
                 wordWrap: { width: noteWidth - 26, useAdvancedWrap: true }
@@ -334,7 +334,7 @@ export class ExpeditionScene extends Phaser.Scene {
             "[ HOLD BOOST • SPACE ]",
             {
                 fontFamily: font,
-                fontSize: this.viewWidth < 650 ? "14px" : "16px",
+                fontSize: this.viewWidth < 650 ? "16px" : "18px",
                 fontStyle: "bold",
                 color: "#101923",
                 backgroundColor: "#ffd166",
@@ -363,11 +363,11 @@ export class ExpeditionScene extends Phaser.Scene {
 
         this.secretPanel = this.add.text(this.viewWidth / 2, this.viewHeight * 0.3, "", {
             fontFamily: GAME_FONT,
-            fontSize: this.viewWidth < 650 ? "16px" : "20px",
+            fontSize: this.viewWidth < 650 ? "18px" : "22px",
             fontStyle: "bold",
             color: "#eaf2f8",
             align: "left",
-            lineSpacing: 7,
+            lineSpacing: 10,
             backgroundColor: "#101923f2",
             padding: { x: 18, y: 15 },
             wordWrap: { width: Math.min(610, this.viewWidth - 34), useAdvancedWrap: true },
@@ -900,7 +900,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.wasBoosting = boosting;
         this.drill.setScale(boosting ? 1.1 : 1);
         this.boostButton
-            .setText(boosting ? "[ BOOST • FUEL −8%/s ]" : "[ BOOST • SPACE ]")
+            .setText(boosting ? "[ BOOST • FUEL −6%/s ]" : "[ BOOST • SPACE ]")
             .setColor(boosting ? "#f7fbff" : "#101923")
             .setBackgroundColor(boosting ? "#c44437" : "#ffd166");
         const passFactor = knownLayer ? (this.usesShaft ? 0.55 : 0.78) : 1;
@@ -950,11 +950,11 @@ export class ExpeditionScene extends Phaser.Scene {
         const travelDistance = distance + this.pendingTapDistance;
         const playerMoved = movement.lengthSq() > 0.01 || this.pendingTapDistance > 0;
         this.pendingTapDistance = 0;
-        const fuelConsumptionMultiplier = 6;
+        const fuelConsumptionMultiplier = 4.5;
         this.energy -= layer.resistance * passFactor *
             (travelDistance / (this.layerHeight * 15)) * fuelConsumptionMultiplier;
         if (boosting) {
-            this.energy -= this.energyMax * 0.08 * Math.min(delta / 1000, 0.05);
+            this.energy -= this.energyMax * 0.06 * Math.min(delta / 1000, 0.05);
         }
         if (environment.energyHitKey && !this.triggeredEnergyHazards.has(environment.energyHitKey)) {
             this.triggeredEnergyHazards.add(environment.energyHitKey);
@@ -1115,7 +1115,7 @@ export class ExpeditionScene extends Phaser.Scene {
         const centerX = (this.corridorLeft + this.corridorRight) / 2;
         const popup = this.add.text(centerX, this.viewHeight * 0.44, message, {
             fontFamily: GAME_FONT,
-            fontSize: this.viewWidth < 650 ? "18px" : "26px",
+            fontSize: this.viewWidth < 650 ? "20px" : "28px",
             fontStyle: "bold",
             color,
             backgroundColor: "#101923ee",
@@ -1158,7 +1158,7 @@ export class ExpeditionScene extends Phaser.Scene {
             `+100 SCORE\n+${creditGain} CREDITS`,
             {
             fontFamily: GAME_FONT,
-            fontSize: "17px",
+            fontSize: "19px",
             fontStyle: "bold",
             color: "#ffd166",
             align: "center",
@@ -1506,7 +1506,7 @@ export class ExpeditionScene extends Phaser.Scene {
             message,
             {
             fontFamily: GAME_FONT,
-            fontSize: this.viewWidth < 650 ? "18px" : "26px",
+            fontSize: this.viewWidth < 650 ? "20px" : "28px",
             fontStyle: "bold",
             color: "#f7fbff",
             backgroundColor: "#172433ee",

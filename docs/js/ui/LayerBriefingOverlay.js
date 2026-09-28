@@ -52,7 +52,7 @@ export class LayerBriefingOverlay {
             `${isNew ? "NEW STRATUM" : "FIELD RESURVEY"}  ${String(index + 1).padStart(2, "0")}/${total}`,
             {
                 fontFamily: font,
-                fontSize: compact ? "15px" : "18px",
+                fontSize: compact ? "17px" : "20px",
                 fontStyle: "bold",
                 color: "#91eadc",
                 letterSpacing: 1
@@ -61,7 +61,7 @@ export class LayerBriefingOverlay {
 
         this.add(this.scene.add.text(centerX, top + 50, layer.name.toUpperCase(), {
             fontFamily: font,
-            fontSize: compact ? "25px" : "34px",
+            fontSize: compact ? "28px" : "38px",
             fontStyle: "bold",
             color: "#f7fbff",
             align: "center",
@@ -72,9 +72,9 @@ export class LayerBriefingOverlay {
             `~${layer.ma.toLocaleString()} Ma  •  ${layer.rockType}\n\n${challenge.name}\n${challenge.tip}`,
             {
                 fontFamily: font,
-                fontSize: compact ? "16px" : "20px",
+                fontSize: compact ? "18px" : "22px",
                 color: "#eaf2f8",
-                lineSpacing: compact ? 5 : 7,
+                lineSpacing: compact ? 8 : 10,
                 align: "center",
                 wordWrap: { width: panelWidth - 42, useAdvancedWrap: true }
             }
@@ -84,7 +84,7 @@ export class LayerBriefingOverlay {
             "AUTO 4.0s  •  click to continue",
             {
                 fontFamily: font,
-                fontSize: compact ? "14px" : "16px",
+                fontSize: compact ? "16px" : "18px",
                 fontStyle: "bold",
                 color: "#ffd166",
                 backgroundColor: "#152433ee",

@@ -9,14 +9,14 @@ A small educational Phaser game about exploring ten representative rock units ex
 3. Release the drill.
 4. After impact, move freely in four directions with `WASD`, arrow keys, or the four sides of a touch screen.
 5. Use the permanent field note on the right while collecting five glowing samples: age, rock, field feature, environment, and life/event.
-6. Each sample gives 100 score and credits. A fuel can restores up to 25% energy. Layers 1–7 contain one can each; the final three layers contain two cans each. Base movement now consumes fuel at six times the original rate—2.5 times the previous V4.4.2 rate—to make route planning and fuel collection essential. Each Speed level adds a clearly visible 25% movement increase; Magnet and Earnings upgrades also improve the current run.
+6. Each sample gives 100 score and credits. A fuel can restores up to 25% energy. Layers 1–2 contain one can each; layers 3–10 contain two cans spaced across the route. Base movement fuel drain is reduced by 25% from the previous build, and Boost drain drops from 8% to 6% of the full tank per second. Each Speed level adds a clearly visible 25% movement increase; Magnet and Earnings upgrades also improve the current run.
 7. A four-second briefing introduces each layer; it can be skipped after 0.7 seconds and the five-line note remains visible.
 8. Hitting one of four sparse rocks pauses the drill and asks a three-choice question taken directly from the visible note.
 9. A correct answer gives 50 score; a wrong answer removes 100 score and slows the drill for two seconds.
 10. Collecting all five samples opens a one-purchase upgrade screen before the next layer. Every upgrade costs 200 credits, has no level cap, and can always be skipped.
 11. Aim for the existing shaft on later launches to conserve energy, then complete the survey in all ten units.
 
-Hold `Space` or the on-screen `BOOST` button while steering for 2.15× movement speed. Boost consumes an additional 8% of the full fuel tank per second. A Near Miss is awarded only after the drill enters a rock's narrow safety margin and exits it again without ever touching the rock. Movement stays at normal speed, a spatial vehicle-style whoosh confirms the clean pass, `50 × combo` points are awarded, and chains reach `x4` within 2.5 seconds. Contact triggers the quiz immediately and cancels the pending Near Miss.
+Hold `Space` or the on-screen `BOOST` button while steering for 2.15× movement speed. Boost consumes an additional 6% of the full fuel tank per second. A Near Miss is awarded only after the drill enters a rock's narrow safety margin and exits it again without ever touching the rock. Movement stays at normal speed, a spatial vehicle-style whoosh confirms the clean pass, `50 × combo` points are awarded, and chains reach `x4` within 2.5 seconds. Contact triggers the quiz immediately and cancels the pending Near Miss.
 
 Every new expedition opens with a concise How to Play panel covering launch, movement, samples, Rock Checks, fuel, Boost, and Near Miss in six short lines. Press `Space` or select `START EXPEDITION` to continue. The simplified HUD keeps only Run Time, Layer Time, samples, fuel, hits, score, and credits; clocks pause during briefings, Rock Checks, and upgrades.
 

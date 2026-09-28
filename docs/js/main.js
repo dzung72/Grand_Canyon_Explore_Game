@@ -16,8 +16,8 @@ async function startGame() {
     }
 
     const [{ ExpeditionScene }, { ResultsScene }] = await Promise.all([
-        import("./scenes/ExpeditionScene.js?v=4.6.3"),
-        import("./scenes/ResultsScene.js?v=4.6.3")
+        import("./scenes/ExpeditionScene.js?v=4.6.4"),
+        import("./scenes/ResultsScene.js?v=4.6.4")
     ]);
 
     loadDatabase();

@@ -57,11 +57,11 @@ export class EvidenceCourse {
                 const y = this.layerStartY + (layerIndex + point.y) * this.layerHeight;
                 this.samples.push(this.createSample(layerIndex, clueIndex, clue, x, y));
             });
-            const isFinalThree = layerIndex >= ROCK_LAYERS.length - 3;
-            const fuelPositions = isFinalThree
+            const hasTwoFuelCans = layerIndex >= 2;
+            const fuelPositions = hasTwoFuelCans
                 ? [
-                    { x: layerIndex % 2 === 0 ? 0.86 : 0.14, y: 0.16 },
-                    { x: layerIndex % 2 === 0 ? 0.16 : 0.84, y: 0.43 }
+                    { x: layerIndex % 2 === 0 ? 0.86 : 0.14, y: 0.24 },
+                    { x: layerIndex % 2 === 0 ? 0.18 : 0.82, y: 0.72 }
                 ]
                 : [{ x: layerIndex % 2 === 0 ? 0.9 : 0.1, y: 0.54 }];
             fuelPositions.forEach((position) => {
@@ -302,7 +302,7 @@ export class EvidenceCourse {
     addEnvironmentLabel(text, y, color) {
         this.scene.add.text((this.arenaLeft + this.arenaRight) / 2, y, text, {
             fontFamily: GAME_FONT,
-            fontSize: "14px",
+            fontSize: "16px",
             fontStyle: "bold",
             color: "#101923",
             backgroundColor: Phaser.Display.Color.IntegerToColor(color).rgba,
@@ -333,7 +333,7 @@ export class EvidenceCourse {
         };
         this.scene.add.text(x(0.06), y(0.91), landmarkNames[layer.texture] || "FIELD CLUE", {
             fontFamily: GAME_FONT,
-            fontSize: "15px",
+            fontSize: "17px",
             fontStyle: "bold",
             color: "#f7fbff",
             backgroundColor: "#101923cc",
@@ -473,7 +473,7 @@ export class EvidenceCourse {
 
         const label = this.scene.add.text(0, -2, style.letter, {
             fontFamily: GAME_FONT,
-            fontSize: "15px",
+            fontSize: "17px",
             fontStyle: "bold",
             color: "#101923"
         }).setOrigin(0.5);
@@ -511,7 +511,7 @@ export class EvidenceCourse {
         graphic.lineBetween(0, -5, 0, 5);
         const label = this.scene.add.text(0, 30, "FUEL", {
             fontFamily: GAME_FONT,
-            fontSize: "14px",
+            fontSize: "16px",
             fontStyle: "bold",
             color: "#f7fbff",
             backgroundColor: "#101923cc",

@@ -9,8 +9,8 @@ import {
     leaderboard,
     saveDatabase
 } from "../services/storage.js?v=4.4.0";
-import { pixelButton } from "../ui/components.js?v=4.6.1";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.3";
+import { pixelButton } from "../ui/components.js?v=4.6.4";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.4";
 import { retroMusic } from "../services/AudioManager.js?v=4.6.1";
 import { GAME_FONT } from "../core/theme.js?v=4.6.1";
 
@@ -40,7 +40,7 @@ export class ResultsScene extends Phaser.Scene {
     drawMusicButton() {
         const button = this.add.text(14, 14, `[ ${retroMusic.label()} ]`, {
             fontFamily: GAME_FONT,
-            fontSize: this.width < 650 ? "13px" : "15px",
+            fontSize: this.width < 650 ? "15px" : "17px",
             fontStyle: "bold",
             color: "#101923",
             backgroundColor: "#91eadc",
@@ -71,7 +71,7 @@ export class ResultsScene extends Phaser.Scene {
         const title = this.runData.complete ? "MISSION COMPLETE" : "EXPEDITION REPORT";
         this.add.text(this.width / 2, 35, title, {
             fontFamily: font,
-            fontSize: compact ? "27px" : "38px",
+            fontSize: compact ? "30px" : "42px",
             fontStyle: "bold",
             color: "#ffd166",
             stroke: "#08131d",
@@ -89,7 +89,7 @@ export class ResultsScene extends Phaser.Scene {
             const recordLabel = `★ NEW ${records.join(" + ")} RECORD! ★`;
             this.add.text(this.width / 2, 78, recordLabel, {
                 fontFamily: font,
-                fontSize: compact ? "16px" : "21px",
+                fontSize: compact ? "18px" : "23px",
                 fontStyle: "bold",
                 color: "#66e0cf"
             }).setOrigin(0.5);
@@ -114,9 +114,9 @@ export class ResultsScene extends Phaser.Scene {
         const topY = compact ? 112 : 125;
         const reportPanel = this.add.text(leftX, topY, report, {
             fontFamily: font,
-            fontSize: compact ? "15px" : "19px",
+            fontSize: compact ? "17px" : "21px",
             color: "#f7fbff",
-            lineSpacing: compact ? 6 : 8,
+            lineSpacing: compact ? 9 : 11,
             backgroundColor: "#172433dd",
             padding: { x: 14, y: 12 }
         });
@@ -140,7 +140,7 @@ export class ResultsScene extends Phaser.Scene {
             `NEW DISCOVERIES\n${discoveredText}`,
             {
             fontFamily: font,
-            fontSize: compact ? "14px" : "16px",
+            fontSize: compact ? "16px" : "18px",
             color: "#d9e7f2",
             lineSpacing: 6,
             wordWrap: { width: compact ? this.width - 40 : this.width * 0.47 }
@@ -159,7 +159,7 @@ export class ResultsScene extends Phaser.Scene {
             : 130;
         this.add.text(boardX, boardY, `LOCAL EXPLORERS\n${boardLines.join("\n")}`, {
             fontFamily: font,
-            fontSize: compact ? "14px" : "17px",
+            fontSize: compact ? "16px" : "19px",
             color: "#f7fbff",
             lineSpacing: 8,
             backgroundColor: "#162838f2",
@@ -192,7 +192,7 @@ export class ResultsScene extends Phaser.Scene {
             storageAvailable ? "LOCAL SAVE ON" : "LOCAL SAVE OFF",
             {
                 fontFamily: font,
-                fontSize: "14px",
+                fontSize: "16px",
                 color: storageAvailable ? "#66e0cf" : "#ff9f85"
             }
         ).setOrigin(1, 1);

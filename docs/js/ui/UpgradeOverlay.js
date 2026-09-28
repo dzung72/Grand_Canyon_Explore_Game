@@ -23,10 +23,10 @@ export class UpgradeOverlay {
         this.add(this.scene.add.rectangle(centerX, top + panelHeight / 2, panelWidth, panelHeight, 0x101923, 0.99)
             .setStrokeStyle(4, 0x66e0cf, 1).setScrollFactor(0).setDepth(81));
         this.add(this.scene.add.text(centerX, top + 18, "LAYER COMPLETE", {
-            fontFamily: font, fontSize: compact ? "25px" : "32px", fontStyle: "bold", color: "#ffd166"
+            fontFamily: font, fontSize: compact ? "28px" : "36px", fontStyle: "bold", color: "#ffd166"
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
         this.add(this.scene.add.text(centerX, top + 54, `${layer.name} • ${layer.ma} Ma\nCREDITS: ${credits}`, {
-            fontFamily: font, fontSize: compact ? "16px" : "20px", color: "#f7fbff", align: "center"
+            fontFamily: font, fontSize: compact ? "18px" : "22px", color: "#f7fbff", align: "center", lineSpacing: 6
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
 
         const descriptions = {
@@ -44,7 +44,7 @@ export class UpgradeOverlay {
                 `${choice.type.toUpperCase()}  LV ${upgrades[choice.type]}\n${descriptions[choice.type]}\n${choice.cost} CREDITS`,
                 {
                     fontFamily: font,
-                    fontSize: compact ? "15px" : "17px",
+                    fontSize: compact ? "17px" : "19px",
                     fontStyle: "bold",
                     color: choice.available ? "#101923" : "#8e7f78",
                     backgroundColor: choice.available ? "#ffd166" : "#332a2e",
@@ -62,7 +62,7 @@ export class UpgradeOverlay {
         });
 
         const skip = this.scene.add.text(centerX, top + panelHeight - 34, "[ SKIP UPGRADE ]", {
-            fontFamily: font, fontSize: "18px", fontStyle: "bold", color: "#91eadc"
+            fontFamily: font, fontSize: "20px", fontStyle: "bold", color: "#91eadc"
         }).setOrigin(0.5).setScrollFactor(0).setDepth(82).setInteractive({ useHandCursor: true });
         skip.on("pointerdown", () => onChoice(null));
         this.add(skip);

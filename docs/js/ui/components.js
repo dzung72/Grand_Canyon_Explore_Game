@@ -27,7 +27,7 @@ export function makeDrill(scene, scale = 1) {
 export function pixelButton(scene, label, callback) {
     const button = scene.add.text(0, 0, `[ ${label} ]`, {
         fontFamily: GAME_FONT,
-        fontSize: "19px",
+        fontSize: "21px",
         fontStyle: "bold",
         color: "#08131d",
         backgroundColor: "#ffd166",

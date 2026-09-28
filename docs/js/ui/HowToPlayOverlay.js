@@ -42,7 +42,7 @@ export class HowToPlayOverlay {
 
         this.add(this.scene.add.text(centerX, top + 22, "HOW TO PLAY", {
             fontFamily: font,
-            fontSize: compact ? "27px" : "38px",
+            fontSize: compact ? "29px" : "40px",
             fontStyle: "bold",
             color: "#ffd166",
             stroke: "#08131d",
@@ -53,7 +53,7 @@ export class HowToPlayOverlay {
             "GRAND CANYON FIELD EXPEDITION • 10 LAYERS",
             {
                 fontFamily: font,
-                fontSize: compact ? "13px" : "17px",
+                fontSize: compact ? "15px" : "19px",
                 fontStyle: "bold",
                 color: "#91eadc",
                 letterSpacing: 1
@@ -65,17 +65,17 @@ export class HowToPlayOverlay {
             ["2  MOVE", "WASD, arrows, or touch."],
             ["3  GOAL", "Collect 5 samples per layer."],
             ["4  ROCK", "Hit one? Answer from the note."],
-            ["5  FUEL", "Cans give 25%. Boost is fast but drains fuel."],
+            ["5  FUEL", "Cans give 25%. Layers 3–10 have two."],
             ["6  NEAR MISS", "Pass close without contact. Chain up to x4."]
         ];
         const addInstructions = (items, x, y, textWidth) => {
             const body = items.map(([title, text]) => `${title} — ${text}`).join("\n\n");
             this.add(this.scene.add.text(x, y, body, {
                 fontFamily: font,
-                fontSize: compact ? "13px" : "17px",
+                fontSize: compact ? "15px" : "19px",
                 fontStyle: "normal",
                 color: "#eaf2f8",
-                lineSpacing: compact ? 5 : 7,
+                lineSpacing: compact ? 8 : 10,
                 wordWrap: { width: textWidth, useAdvancedWrap: true }
             }).setScrollFactor(0).setDepth(152));
         };
@@ -91,7 +91,7 @@ export class HowToPlayOverlay {
             "[ START EXPEDITION ]",
             {
                 fontFamily: font,
-                fontSize: compact ? "17px" : "21px",
+                fontSize: compact ? "19px" : "23px",
                 fontStyle: "bold",
                 color: "#101923",
                 backgroundColor: "#ffd166",
