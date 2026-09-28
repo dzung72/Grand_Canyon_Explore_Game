@@ -1,14 +1,17 @@
-import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=4.1.1";
-import { database, currentRecord, saveDatabase } from "../services/storage.js?v=4.1.1";
+import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=4.2.1";
+import { database, currentRecord, formatRunTime, saveDatabase } from "../services/storage.js?v=4.4.0";
 import { makeDrill } from "../ui/components.js";
 import { showStatus } from "../core/status.js";
 import { ExpeditionWorld } from "../world/ExpeditionWorld.js";
-import { ImpactEffects } from "../effects/ImpactEffects.js";
-import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=4.1.1";
+import { ImpactEffects } from "../effects/ImpactEffects.js?v=4.4.0";
+import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=4.5.2";
+import { getLayerChallenge } from "../gameplay/layerChallenges.js?v=4.4.6";
 import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js";
+import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=4.2.0";
 import { QuizOverlay } from "../ui/QuizOverlay.js?v=4.1.1";
-import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=4.1.1";
-import { retroMusic } from "../services/AudioManager.js?v=4.1.2";
+import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=4.4.7";
+import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=4.6.0";
+import { retroMusic } from "../services/AudioManager.js?v=4.5.0";
 
 const Phaser = window.Phaser;
 
@@ -21,6 +24,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.record = currentRecord();
         this.previousBest = this.record.discovered;
         this.previousBestScore = this.record.bestScore;
+        this.previousBestTimeMs = this.record.bestTimeMs;
         this.newLayers = [];
         this.collisions = 0;
         this.currentLayer = -1;
@@ -32,20 +36,36 @@ export class ExpeditionScene extends Phaser.Scene {
         this.lastFallStreakAt = 0;
         this.lastDrillParticleAt = 0;
         this.collisionCooldownUntil = 0;
+        this.layerEntryGraceUntil = 0;
         this.slowUntil = 0;
         this.alertUntil = 0;
         this.touchSteerX = 0;
         this.touchSteerY = 0;
         this.touchPointerId = null;
+        this.touchBoostHeld = false;
+        this.boostPointerId = null;
         this.pendingTapDistance = 0;
+        this.wasBoosting = false;
+        this.lastBoostParticleAt = 0;
+        this.nearMissCombo = 0;
+        this.nearMissExpiresAt = 0;
+        this.nearMissSlowUntil = 0;
+        this.totalNearMisses = 0;
+        this.bestNearMissCombo = 0;
+        this.challengeClockMs = 0;
         this.layerSamples = ROCK_LAYERS.map(() => new Set());
         this.completedLayers = new Set();
+        this.briefedLayers = new Set();
         this.collectedSecrets = [];
         this.score = 0;
         this.credits = 0;
         this.correctAnswers = 0;
         this.wrongAnswers = 0;
         this.upgrades = { speed: 0, magnet: 0, earnings: 0 };
+        this.activeElapsedMs = 0;
+        this.layerElapsedMs = 0;
+        this.energyDrainFlashAt = 0;
+        this.triggeredEnergyHazards = new Set();
 
         this.viewWidth = Math.max(320, this.scale.width);
         this.viewHeight = Math.max(420, this.scale.height);
@@ -94,14 +114,17 @@ export class ExpeditionScene extends Phaser.Scene {
 
         this.createInterface();
         this.notebook = new LayerNotebookOverlay(this, () => currentRecord().discovered);
+        this.layerBriefing = new LayerBriefingOverlay(this, () => this.playAreaRight || this.viewWidth);
         this.quizOverlay = new QuizOverlay(this, () => this.playAreaRight || this.viewWidth);
         this.upgradeOverlay = new UpgradeOverlay(this, () => this.playAreaRight || this.viewWidth);
+        this.howToPlay = new HowToPlayOverlay(this);
         this.bindInput();
         this.resetRound();
+        this.openHowToPlay();
 
         this.scale.on("resize", this.handleResize, this);
         this.events.once("shutdown", this.cleanupScene, this);
-        showStatus(`Phaser ${Phaser.VERSION} ready • V4.1 expedition`, "success");
+        showStatus(`Phaser ${Phaser.VERSION} ready • V4.6 expedition`, "success");
     }
 
     createInterface() {
@@ -111,7 +134,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.titleText = this.add.text(
             18,
             16,
-            this.viewWidth < 650 ? "GC DRILL // V4.1" : "GRAND CANYON DRILL // V4.1",
+            this.viewWidth < 650 ? "GC DRILL // V4.6" : "GRAND CANYON DRILL // V4.6",
             {
             fontFamily: font,
             fontSize: this.viewWidth < 650 ? "18px" : "28px",
@@ -177,9 +200,28 @@ export class ExpeditionScene extends Phaser.Scene {
             this.musicButton.setText(`[ ${retroMusic.label()} ]`);
         });
 
-        this.fieldNotesButton = this.add.text(
-            this.viewWidth - (this.viewWidth < 650 ? 12 : 272),
+        this.sfxButton = this.add.text(
+            this.viewWidth - (this.viewWidth < 650 ? 126 : 270),
             this.viewWidth < 650 ? 52 : 16,
+            `[ ${retroMusic.sfxLabel()} ]`,
+            {
+                fontFamily: font,
+                fontSize: this.viewWidth < 650 ? "10px" : "13px",
+                fontStyle: "bold",
+                color: "#17121b",
+                backgroundColor: "#ffd166",
+                padding: { x: 8, y: 7 }
+            }
+        ).setOrigin(1, 0).setScrollFactor(0).setDepth(46).setInteractive({ useHandCursor: true });
+        this.sfxButton.on("pointerdown", async (pointer, localX, localY, event) => {
+            event?.stopPropagation();
+            await retroMusic.toggleSfx();
+            this.sfxButton.setText(`[ ${retroMusic.sfxLabel()} ]`);
+        });
+
+        this.fieldNotesButton = this.add.text(
+            this.viewWidth - (this.viewWidth < 650 ? 12 : 380),
+            this.viewWidth < 650 ? 88 : 16,
             "[ FIELD NOTES ]",
             {
                 fontFamily: font,
@@ -285,6 +327,39 @@ export class ExpeditionScene extends Phaser.Scene {
             }
         ).setScrollFactor(0).setDepth(39).setVisible(false);
 
+        this.boostButton = this.add.text(
+            18,
+            this.viewHeight - 82,
+            "[ HOLD BOOST • SPACE ]",
+            {
+                fontFamily: font,
+                fontSize: this.viewWidth < 650 ? "11px" : "14px",
+                fontStyle: "bold",
+                color: "#17121b",
+                backgroundColor: "#ffd166",
+                padding: { x: 11, y: 9 }
+            }
+        ).setScrollFactor(0).setDepth(47).setVisible(false).setInteractive({ useHandCursor: true });
+        this.boostButton.on("pointerdown", (pointer, localX, localY, event) => {
+            event?.stopPropagation();
+            this.unlockAudio();
+            if (this.roundState === "drilling") {
+                this.touchBoostHeld = true;
+                this.boostPointerId = pointer.id;
+            }
+        });
+        this.boostButton.on("pointerup", (pointer) => {
+            if (pointer.id === this.boostPointerId) {
+                this.touchBoostHeld = false;
+                this.boostPointerId = null;
+            }
+        });
+        this.boostButton.on("pointerout", (pointer) => {
+            if (pointer.id !== this.boostPointerId) return;
+            this.touchBoostHeld = false;
+            this.boostPointerId = null;
+        });
+
         this.secretPanel = this.add.text(this.viewWidth / 2, this.viewHeight * 0.3, "", {
             fontFamily: "Arial, sans-serif",
             fontSize: this.viewWidth < 650 ? "14px" : "18px",
@@ -302,9 +377,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
     bindInput() {
         this.drill.on("pointerdown", (pointer) => {
-            retroMusic.start().then(() => {
-                this.musicButton?.setText(`[ ${retroMusic.label()} ]`);
-            });
+            this.unlockAudio();
             if (this.roundState !== "ready" || this.notebook?.isOpen) return;
             this.roundState = "dragging";
             this.dragPointerId = pointer.id;
@@ -327,8 +400,17 @@ export class ExpeditionScene extends Phaser.Scene {
                 this.touchSteerY = 0;
                 this.touchPointerId = null;
             }
+            if (pointer.id === this.boostPointerId) {
+                this.touchBoostHeld = false;
+                this.boostPointerId = null;
+            }
         });
         this.input.on("pointerdown", (pointer) => {
+            this.unlockAudio();
+            if (this.layerBriefing?.isOpen) {
+                this.layerBriefing.tryContinue();
+                return;
+            }
             if (
                 this.notebook?.isOpen ||
                 this.roundState !== "drilling" ||
@@ -346,7 +428,8 @@ export class ExpeditionScene extends Phaser.Scene {
                 this.touchSteerY = Math.sign(dy);
             }
             this.touchPointerId = pointer.id;
-            const tapStep = 18 * (1 + this.upgrades.speed * 0.08);
+            const tapStep = 18 * (1 + this.upgrades.speed * 0.25) *
+                (this.touchBoostHeld ? 2.15 : 1);
             this.drill.x += this.touchSteerX * tapStep;
             this.drill.y += this.touchSteerY * tapStep;
             this.pendingTapDistance += tapStep;
@@ -355,9 +438,12 @@ export class ExpeditionScene extends Phaser.Scene {
             this.touchSteerX = 0;
             this.touchSteerY = 0;
             this.touchPointerId = null;
+            this.touchBoostHeld = false;
+            this.boostPointerId = null;
         });
 
         if (this.input.keyboard) {
+            this.input.keyboard.once("keydown", () => this.unlockAudio());
             this.keys = this.input.keyboard.addKeys({
                 leftA: Phaser.Input.Keyboard.KeyCodes.A,
                 rightD: Phaser.Input.Keyboard.KeyCodes.D,
@@ -368,10 +454,17 @@ export class ExpeditionScene extends Phaser.Scene {
                 upArrow: Phaser.Input.Keyboard.KeyCodes.UP,
                 downArrow: Phaser.Input.Keyboard.KeyCodes.DOWN,
                 reset: Phaser.Input.Keyboard.KeyCodes.R,
+                continue: Phaser.Input.Keyboard.KeyCodes.SPACE,
                 notes: Phaser.Input.Keyboard.KeyCodes.N,
                 closeNotes: Phaser.Input.Keyboard.KeyCodes.ESC
             });
         }
+    }
+
+    async unlockAudio() {
+        await retroMusic.start();
+        this.musicButton?.setText(`[ ${retroMusic.label()} ]`);
+        this.sfxButton?.setText(`[ ${retroMusic.sfxLabel()} ]`);
     }
 
     resetRound() {
@@ -382,10 +475,18 @@ export class ExpeditionScene extends Phaser.Scene {
         this.touchSteerX = 0;
         this.touchSteerY = 0;
         this.touchPointerId = null;
+        this.touchBoostHeld = false;
+        this.boostPointerId = null;
+        this.wasBoosting = false;
+        this.nearMissCombo = 0;
+        this.nearMissExpiresAt = 0;
+        this.nearMissSlowUntil = 0;
         this.pendingTapDistance = 0;
         retroMusic.setMotor(false);
+        retroMusic.setAmbience(false);
         this.quizOverlay?.close();
         this.upgradeOverlay?.close();
+        this.layerBriefing?.close(false);
         this.cameras.main.scrollY = this.initialCameraY;
         this.drill.setPosition(this.anchorX, this.anchorY).setAngle(0).setScale(1).setDepth(10);
         this.drill.input.cursor = "grab";
@@ -405,6 +506,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.economyText.setVisible(false);
         this.energyGraphics.setVisible(false);
         this.laneGraphics.setVisible(false);
+        this.boostButton.setVisible(false);
         this.secretPanel.setVisible(false);
         this.currentNotePanel.setVisible(false);
         this.currentNoteTitle.setVisible(false);
@@ -417,6 +519,19 @@ export class ExpeditionScene extends Phaser.Scene {
         );
         this.drawBands();
         this.drawPowerMeter();
+    }
+
+    openHowToPlay() {
+        this.roundState = "instructions";
+        this.howToPlay.open(() => {
+            this.roundState = "ready";
+            this.helpText.setText(
+                this.record.discovered > 0
+                    ? "AIM FOR THE OLD SHAFT • PULL UP • RELEASE"
+                    : "GRAB THE DRILL • PULL UP • RELEASE"
+            );
+            showStatus("Expedition ready", "success");
+        });
     }
 
     updateDrag(pointer) {
@@ -513,6 +628,21 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     update(time, delta) {
+        if (this.howToPlay?.isOpen) {
+            if (this.keys && Phaser.Input.Keyboard.JustDown(this.keys.continue)) {
+                this.howToPlay.start();
+            }
+            return;
+        }
+        this.layerBriefing?.update();
+        if (
+            this.layerBriefing?.isOpen &&
+            this.keys &&
+            Phaser.Input.Keyboard.JustDown(this.keys.continue)
+        ) {
+            this.layerBriefing.tryContinue();
+        }
+        if (this.layerBriefing?.isOpen) return;
         if (this.keys && Phaser.Input.Keyboard.JustDown(this.keys.notes)) {
             if (this.notebook.isOpen) this.notebook.close();
             else if (this.roundState === "ready") this.notebook.open();
@@ -692,10 +822,8 @@ export class ExpeditionScene extends Phaser.Scene {
         this.economyText.setVisible(true);
         this.energyGraphics.setVisible(true);
         this.laneGraphics.setVisible(true);
-        this.currentNotePanel.setVisible(true);
-        this.currentNoteTitle.setVisible(true);
-        this.currentNoteBody.setVisible(true);
-        this.currentNoteHint.setVisible(true);
+        this.boostButton.setVisible(true);
+        this.setCurrentNoteVisible(true);
         const playCenter = (this.corridorLeft + this.corridorRight) / 2;
         this.helpText.setX(playCenter);
         this.layerBanner.setX(playCenter);
@@ -705,19 +833,31 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     updateDrilling(time, delta) {
-        const dt = Math.min(delta / 1000, 0.034);
+        const slowMotionScale = time < this.nearMissSlowUntil ? 0.28 : 1;
+        const dt = Math.min(delta / 1000, 0.034) * slowMotionScale;
         const layerIndex = Phaser.Math.Clamp(
             Math.floor((this.drill.y - this.layerStartY) / this.layerHeight),
             0,
             ROCK_LAYERS.length - 1
         );
         this.enterLayer(layerIndex);
+        if (this.roundState !== "drilling") return;
+        this.activeElapsedMs += delta;
+        this.layerElapsedMs += delta;
+        if (this.nearMissCombo > 0 && time > this.nearMissExpiresAt) {
+            this.nearMissCombo = 0;
+        }
+        this.challengeClockMs += delta * slowMotionScale;
         const layer = ROCK_LAYERS[layerIndex];
+        const challenge = getLayerChallenge(layerIndex);
+        this.evidenceCourse.update(this.challengeClockMs);
         const knownLayer = layerIndex < this.previousBest;
+        const boostInputHeld = this.touchBoostHeld || Boolean(this.keys?.continue.isDown);
         let moveX = this.touchSteerX;
         let moveY = this.touchSteerY;
         if (this.keys) {
-            const keyboardTapStep = 18 * (1 + this.upgrades.speed * 0.08);
+            const keyboardTapStep = 18 * (1 + this.upgrades.speed * 0.25) *
+                (boostInputHeld ? 2.15 : 1);
             const leftDown = this.keys.leftA.isDown || this.keys.leftArrow.isDown;
             const rightDown = this.keys.rightD.isDown || this.keys.rightArrow.isDown;
             const upDown = this.keys.upW.isDown || this.keys.upArrow.isDown;
@@ -755,21 +895,51 @@ export class ExpeditionScene extends Phaser.Scene {
         }
         const movement = new Phaser.Math.Vector2(moveX, moveY);
         if (movement.length() > 1) movement.normalize();
+        const boosting = boostInputHeld && movement.lengthSq() > 0.01 && this.energy > 0;
+        const boostFactor = boosting ? 2.15 : 1;
+        if (boosting && !this.wasBoosting) retroMusic.effect("boost");
+        this.wasBoosting = boosting;
+        this.drill.setScale(boosting ? 1.1 : 1);
+        this.boostButton
+            .setText(boosting ? "[ BOOSTING • FUEL −8%/s ]" : "[ HOLD BOOST • SPACE ]")
+            .setColor(boosting ? "#fff1c1" : "#17121b")
+            .setBackgroundColor(boosting ? "#c44437" : "#ffd166");
         const passFactor = knownLayer ? (this.usesShaft ? 0.55 : 0.78) : 1;
         const slowFactor = time < this.slowUntil ? 0.42 : 1;
-        const upgradeFactor = 1 + this.upgrades.speed * 0.08;
-        const speed = (165 + (30 - layer.resistance) * 1.5) * slowFactor * upgradeFactor;
+        const upgradeFactor = 1 + this.upgrades.speed * 0.25;
+        const environment = this.evidenceCourse.getEnvironmentEffect(
+            layerIndex,
+            this.drill.x,
+            this.drill.y,
+            this.challengeClockMs
+        );
+        const speed = (165 + (30 - layer.resistance) * 1.5) * slowFactor *
+            upgradeFactor * boostFactor * environment.speedMultiplier;
         const layerTop = this.layerStartY + layerIndex * this.layerHeight + 48;
         const layerBottom = this.layerStartY + (layerIndex + 1) * this.layerHeight - 48;
         const beforeX = this.drill.x;
         const beforeY = this.drill.y;
         this.drill.x = Phaser.Math.Clamp(
-            this.drill.x + movement.x * speed * dt,
+            this.drill.x + (movement.x * speed + environment.pushX) * dt,
             this.corridorLeft,
             this.corridorRight
         );
-        this.drill.y += movement.y * speed * dt;
+        this.drill.y += (movement.y * speed + environment.pushY) * dt;
         this.drill.y = Phaser.Math.Clamp(this.drill.y, layerTop, layerBottom);
+        const mazeResult = this.evidenceCourse.resolveMazeCollision(
+            layerIndex,
+            beforeX,
+            beforeY,
+            this.drill.x,
+            this.drill.y
+        );
+        this.drill.setPosition(mazeResult.x, mazeResult.y);
+        if (mazeResult.hit && time >= (this.mazeBumpUntil || 0)) {
+            this.mazeBumpUntil = time + 360;
+            this.cameras.main.shake(80, 0.003);
+            this.helpText.setText("STROMATOLITE WALL • FIND THE OPEN GAP");
+            this.alertUntil = time + 700;
+        }
         if (movement.lengthSq() > 0.01) {
             const targetAngle = Phaser.Math.RadToDeg(Math.atan2(movement.y, movement.x)) - 90;
             this.drill.angle += Phaser.Math.Angle.ShortestBetween(
@@ -779,9 +949,26 @@ export class ExpeditionScene extends Phaser.Scene {
         }
         const distance = Phaser.Math.Distance.Between(beforeX, beforeY, this.drill.x, this.drill.y);
         const travelDistance = distance + this.pendingTapDistance;
+        const playerMoved = movement.lengthSq() > 0.01 || this.pendingTapDistance > 0;
         this.pendingTapDistance = 0;
-        this.energy -= layer.resistance * passFactor * (travelDistance / (this.layerHeight * 15));
-        retroMusic.setMotor(travelDistance > 0.5, Math.max(movement.length(), 0.55), layer.resistance);
+        const fuelConsumptionMultiplier = 6;
+        this.energy -= layer.resistance * passFactor *
+            (travelDistance / (this.layerHeight * 15)) * fuelConsumptionMultiplier;
+        if (boosting) {
+            this.energy -= this.energyMax * 0.08 * Math.min(delta / 1000, 0.05);
+        }
+        if (environment.energyHitKey && !this.triggeredEnergyHazards.has(environment.energyHitKey)) {
+            this.triggeredEnergyHazards.add(environment.energyHitKey);
+            this.energy -= this.energyMax * 0.15;
+            this.cameras.main.flash(110, 255, 96, 48, false);
+            retroMusic.effect("hazard");
+            this.showScreenPopup("HOT BASALT  −15% FUEL", "#ff8a66");
+            this.helpText.setText("HOT BASALT POCKET • FUEL LOST");
+            this.alertUntil = time + 1350;
+        }
+        // Movement stays quiet so collectible, quiz, impact, and transition cues remain clear.
+        retroMusic.setMotor(false);
+        retroMusic.setAmbience(true, layerIndex / Math.max(1, ROCK_LAYERS.length - 1));
 
         const magnetRadius = 33 + this.upgrades.magnet * 20;
         const sample = this.evidenceCourse.findSampleCollision(
@@ -791,18 +978,33 @@ export class ExpeditionScene extends Phaser.Scene {
         );
         if (sample) this.collectEvidence(sample, time);
 
-        if (time >= this.collisionCooldownUntil) {
+        const fuelCan = this.evidenceCourse.findFuelCollision(
+            this.drill.x,
+            this.drill.y,
+            34 + this.upgrades.magnet * 8
+        );
+        if (fuelCan) this.collectFuel(fuelCan, time);
+
+        if (time >= this.collisionCooldownUntil && time >= this.layerEntryGraceUntil) {
             const obstacle = this.evidenceCourse.findObstacleCollision(this.drill.x, this.drill.y);
-            if (obstacle) this.handleObstacleCollision(obstacle, layer, time);
+            if (obstacle) {
+                this.handleObstacleCollision(obstacle, layer, time);
+            } else if (playerMoved && travelDistance > 2.5) {
+                const nearMiss = this.evidenceCourse.trackNearMiss(this.drill.x, this.drill.y);
+                if (nearMiss) this.registerNearMiss(nearMiss, time);
+            }
         }
 
         if (time > this.alertUntil && this.roundState === "drilling") {
             this.helpText.setText(
-                "MOVE IN 4 DIRECTIONS • SEARCH THE WHOLE LAYER • FIND 5"
+                environment.label
+                    ? `${environment.label} • STEER AND FIND 5`
+                    : `${challenge.name} • SEARCH THE WHOLE LAYER • FIND 5`
             );
         }
 
         if (travelDistance > 0.5) this.spawnDrillParticles(time, layer);
+        if (boosting) this.spawnBoostTrail(time, layer);
         const desiredScroll = Phaser.Math.Clamp(
             this.layerStartY + (layerIndex + 0.5) * this.layerHeight - this.viewHeight * 0.52,
             0,
@@ -812,12 +1014,16 @@ export class ExpeditionScene extends Phaser.Scene {
         const evidenceLabel = `EVIDENCE ${this.layerSamples[layerIndex].size}/5`;
         const energyPercent = Math.round(Phaser.Math.Clamp(this.energy / this.energyMax, 0, 1) * 100);
         this.drillHudText.setText(this.viewWidth < 650
-            ? `LAYER ${String(layerIndex + 1).padStart(2, "0")}/10  •  R ${layer.resistance}/30\n` +
+            ? `RUN ${formatRunTime(this.activeElapsedMs)}  •  LAYER ${formatRunTime(this.layerElapsedMs)}\n` +
                 `CLUES ${this.layerSamples[layerIndex].size}/5  •  ENERGY ${energyPercent}%  •  BUMPS ${this.collisions}`
-            : `LAYER ${String(layerIndex + 1).padStart(2, "0")}/${ROCK_LAYERS.length}  •  ${layer.name}  •  R ${layer.resistance}/30\n` +
-                `${evidenceLabel}  •  ENERGY ${energyPercent}%  •  BUMPS ${this.collisions}`
+            : `RUN ${formatRunTime(this.activeElapsedMs)}  •  LAYER ${formatRunTime(this.layerElapsedMs)}  •  ` +
+                `${String(layerIndex + 1).padStart(2, "0")}/${ROCK_LAYERS.length} ${layer.name}\n` +
+                `${evidenceLabel}  •  ENERGY ${energyPercent}%  •  R ${layer.resistance}/30  •  BUMPS ${this.collisions}`
         );
-        this.economyText.setText(`SCORE ${this.score}\nCREDITS ${this.credits}`);
+        const comboLabel = this.nearMissCombo > 0 && time <= this.nearMissExpiresAt
+            ? `\nNEAR MISS x${this.nearMissCombo}`
+            : "";
+        this.economyText.setText(`SCORE ${this.score}\nCREDITS ${this.credits}${comboLabel}`);
         this.drawEnergyBar();
         this.drawSampleIndicator(layerIndex);
 
@@ -838,8 +1044,16 @@ export class ExpeditionScene extends Phaser.Scene {
         this.roundState = "quiz";
         this.collisionCooldownUntil = time + 1200;
         this.collisions += 1;
+        this.nearMissCombo = 0;
+        this.nearMissExpiresAt = 0;
+        this.touchBoostHeld = false;
+        this.boostPointerId = null;
+        this.wasBoosting = false;
+        this.drill.setScale(1);
+        this.boostButton.setVisible(false);
         retroMusic.effect("bump");
         retroMusic.setMotor(false);
+        retroMusic.setAmbience(false);
         this.cameras.main.shake(170, 0.01);
         const knockDirection = this.drill.x <= obstacle.x ? -1 : 1;
         this.drill.x = Phaser.Math.Clamp(
@@ -848,9 +1062,33 @@ export class ExpeditionScene extends Phaser.Scene {
             this.corridorRight
         );
         this.drill.y -= 7;
-        this.helpText.setText(`ROCK CHECK • USE THE FIELD NOTE ON THE RIGHT`);
+        this.helpText.setText("MEMORY CHECK • FIELD NOTE HIDDEN UNTIL YOU ANSWER");
+        this.setCurrentNoteVisible(false);
         const quiz = getLayerQuiz(layer, obstacle.quizIndex);
         this.quizOverlay.open(quiz, (correct) => this.resolveRockQuiz(obstacle, layer, correct));
+    }
+
+    registerNearMiss(obstacle, time) {
+        this.evidenceCourse.markNearMiss(obstacle);
+        if (time > this.nearMissExpiresAt) this.nearMissCombo = 0;
+        this.nearMissCombo = Math.min(4, this.nearMissCombo + 1);
+        this.nearMissExpiresAt = time + 2500;
+        this.nearMissSlowUntil = time + 150;
+        this.totalNearMisses += 1;
+        this.bestNearMissCombo = Math.max(this.bestNearMissCombo, this.nearMissCombo);
+        const scoreGain = 50 * this.nearMissCombo;
+        this.score += scoreGain;
+        retroMusic.effect("nearMiss");
+        this.cameras.main.shake(70, 0.0016);
+        this.cameras.main.flash(45, 143, 242, 220, false);
+        const comboText = this.nearMissCombo > 1 ? ` x${this.nearMissCombo}` : "";
+        this.showScreenPopup(`NEAR MISS${comboText}  +${scoreGain}`, "#8ff2dc");
+        this.helpText.setText(
+            this.nearMissCombo > 1
+                ? `SKILL STREAK x${this.nearMissCombo} • KEEP MOVING`
+                : "CLEAN DODGE • CHAIN ANOTHER WITHIN 2.5s"
+        );
+        this.alertUntil = time + 900;
     }
 
     resolveRockQuiz(obstacle, layer, correct) {
@@ -869,7 +1107,9 @@ export class ExpeditionScene extends Phaser.Scene {
             this.showScreenPopup("WRONG  −100 • SLOW 2s", "#ff8a66");
             this.helpText.setText("CHECK THE NOTE • DRILL SLOWED FOR 2 SECONDS");
         }
+        this.setCurrentNoteVisible(true);
         this.roundState = "drilling";
+        this.boostButton.setVisible(true);
         this.alertUntil = this.time.now + 1500;
     }
 
@@ -946,12 +1186,39 @@ export class ExpeditionScene extends Phaser.Scene {
         }
     }
 
+    collectFuel(fuelCan, time) {
+        const before = this.energy;
+        if (before >= this.energyMax * 0.98) {
+            if (!fuelCan.fullHintShown) {
+                fuelCan.fullHintShown = true;
+                this.showScreenPopup("FUEL FULL • SAVE IT", "#8ff2dc");
+                this.helpText.setText("FUEL FULL • RETURN AFTER USING ENERGY");
+                this.alertUntil = time + 1200;
+            }
+            return;
+        }
+        this.energy = Math.min(this.energyMax, this.energy + this.energyMax * 0.25);
+        const restored = Math.max(0, Math.round((this.energy - before) / this.energyMax * 100));
+        this.evidenceCourse.collectFuelCan(fuelCan);
+        retroMusic.effect("fuel");
+        this.cameras.main.flash(90, 69, 214, 196, false);
+        this.showScreenPopup(`FUEL +${restored}%`, "#8ff2dc");
+        this.helpText.setText(`FUEL CAN RECOVERED • +${restored}% ENERGY`);
+        this.alertUntil = time + 1250;
+    }
+
     completeLayer(index) {
         if (this.completedLayers.has(index)) return;
         this.completedLayers.add(index);
         const layer = ROCK_LAYERS[index];
+        this.touchBoostHeld = false;
+        this.boostPointerId = null;
+        this.wasBoosting = false;
+        this.drill.setScale(1);
+        this.boostButton.setVisible(false);
         retroMusic.effect("layer");
         retroMusic.setMotor(false);
+        retroMusic.setAmbience(false);
 
         if (index >= this.previousBest && !this.newLayers.includes(index)) {
             this.newLayers.push(index);
@@ -995,8 +1262,7 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     upgradeCost(type) {
-        const costs = [200, 350, 550, 800, 1100];
-        return costs[this.upgrades[type]] ?? null;
+        return 200;
     }
 
     openUpgradeShop(index, layer) {
@@ -1005,8 +1271,8 @@ export class ExpeditionScene extends Phaser.Scene {
             return {
                 type,
                 cost,
-                maxed: cost === null,
-                available: cost !== null && this.credits >= cost
+                maxed: false,
+                available: this.credits >= cost
             };
         });
         this.upgradeOverlay.open({
@@ -1021,11 +1287,14 @@ export class ExpeditionScene extends Phaser.Scene {
         if (this.roundState !== "upgrade") return;
         if (type) {
             const cost = this.upgradeCost(type);
-            if (cost === null || this.credits < cost) return;
+            if (this.credits < cost) return;
             this.credits -= cost;
             this.upgrades[type] += 1;
             retroMusic.effect("upgrade");
-            this.showScreenPopup(`${type.toUpperCase()} UPGRADED`, "#ffd166");
+            const upgradeMessage = type === "speed"
+                ? `SPEED LV ${this.upgrades.speed} • ${Math.round((1 + this.upgrades.speed * 0.25) * 100)}% MOVE`
+                : `${type.toUpperCase()} UPGRADED`;
+            this.showScreenPopup(upgradeMessage, "#ffd166");
         }
         this.upgradeOverlay.close();
         this.roundState = "transition";
@@ -1036,7 +1305,9 @@ export class ExpeditionScene extends Phaser.Scene {
         if (this.roundState !== "transition") return;
         this.drill.y = this.layerStartY + (index + 1) * this.layerHeight + 52;
         this.currentLayer = -1;
+        this.layerEntryGraceUntil = this.time.now + 1500;
         this.roundState = "drilling";
+        this.boostButton.setVisible(true);
         this.helpText.setText("TRANSITION COMPLETE • ENTERING THE NEXT STRATA");
         this.alertUntil = this.time.now + 1000;
     }
@@ -1044,29 +1315,55 @@ export class ExpeditionScene extends Phaser.Scene {
     enterLayer(index) {
         if (index < 0 || index >= ROCK_LAYERS.length || index === this.currentLayer) return;
         this.currentLayer = index;
+        this.layerElapsedMs = 0;
         const layer = ROCK_LAYERS[index];
+        const challenge = getLayerChallenge(index);
         const isNew = index >= this.previousBest;
         this.renderCurrentLayerNote(index);
 
         this.layerBanner.setText(
             `${isNew ? "NEW LAYER" : "RESURVEY"} — FIND 5 CLUES  ${String(index + 1).padStart(2, "0")}/${ROCK_LAYERS.length}\n` +
             `${layer.name}  •  ${layer.ma} Ma\n` +
-            "COLLECT A • R • F • E • L/! TO OPEN THE NEXT LAYER"
+            `${challenge.name} • COLLECT A • R • F • E • L/!`
         );
         this.tweens.killTweensOf(this.layerBanner);
         if (this.viewWidth < 650) {
             this.layerBanner.setAlpha(0);
-            return;
+        } else {
+            this.layerBanner.setAlpha(0).setY(92);
+            this.tweens.add({
+                targets: this.layerBanner,
+                alpha: 1,
+                y: 104,
+                duration: 160,
+                hold: 850,
+                yoyo: true
+            });
         }
-        this.layerBanner.setAlpha(0).setY(92);
-        this.tweens.add({
-            targets: this.layerBanner,
-            alpha: 1,
-            y: 104,
-            duration: 160,
-            hold: 850,
-            yoyo: true
-        });
+
+        if (!this.briefedLayers.has(index)) {
+            this.briefedLayers.add(index);
+            this.roundState = "briefing";
+            this.boostButton.setVisible(false);
+            retroMusic.setMotor(false);
+            retroMusic.setAmbience(false);
+            this.layerBriefing.open({
+                layer,
+                index,
+                total: ROCK_LAYERS.length,
+                challenge,
+                isNew
+            }, () => {
+                if (this.roundState !== "briefing") return;
+                this.roundState = "drilling";
+                this.boostButton.setVisible(true);
+                this.layerEntryGraceUntil = this.time.now + 1500;
+                this.collisionCooldownUntil = Math.max(this.collisionCooldownUntil, this.layerEntryGraceUntil);
+                retroMusic.effect("layer");
+                this.helpText.setText(`${challenge.name} • FIND ALL 5 EVIDENCE SAMPLES`);
+                this.alertUntil = this.time.now + 1500;
+            });
+        }
     }
 
     renderCurrentLayerNote(index) {
@@ -1079,11 +1376,22 @@ export class ExpeditionScene extends Phaser.Scene {
         );
         this.currentNoteBody.setText(evidence.map((clue, clueIndex) => {
             const marker = collected.has(clueIndex) ? "✓" : "○";
-            return `${marker} ${clue.type.padEnd(5, " ")}  ${clue.note || clue.text}`;
+            const type = String(clue?.type || "NOTE").padEnd(5, " ");
+            const note = clue?.note || clue?.text || "Field evidence unavailable.";
+            return `${marker} ${type}  ${note}`;
         }).join("\n"));
         this.currentNoteHint.setText(
             `${collected.size}/5 • +100 score • sample credits increase with Earnings.`
         );
+    }
+
+    setCurrentNoteVisible(visible) {
+        [
+            this.currentNotePanel,
+            this.currentNoteTitle,
+            this.currentNoteBody,
+            this.currentNoteHint
+        ].forEach((item) => item?.setVisible(visible));
     }
 
     spawnDrillParticles(time, layer) {
@@ -1110,6 +1418,28 @@ export class ExpeditionScene extends Phaser.Scene {
                 onComplete: () => chip.destroy()
             });
         }
+    }
+
+    spawnBoostTrail(time, layer) {
+        if (time - this.lastBoostParticleAt < 38) return;
+        this.lastBoostParticleAt = time;
+        const angle = Phaser.Math.DegToRad(this.drill.angle);
+        const trail = this.add.rectangle(
+            this.drill.x - Math.sin(angle) * 42,
+            this.drill.y - Math.cos(angle) * 42,
+            8,
+            26,
+            Phaser.Utils.Array.GetRandom([0x8ff2dc, 0xffd166, layer.color]),
+            0.86
+        ).setAngle(this.drill.angle).setDepth(9);
+        this.tweens.add({
+            targets: trail,
+            scaleY: 1.8,
+            alpha: 0,
+            duration: 210,
+            ease: "Quad.Out",
+            onComplete: () => trail.destroy()
+        });
     }
 
     drawEnergyBar() {
@@ -1145,12 +1475,22 @@ export class ExpeditionScene extends Phaser.Scene {
     finishRun(complete) {
         if (this.roundState !== "drilling") return;
         this.roundState = "stopped";
+        this.touchBoostHeld = false;
+        this.boostPointerId = null;
+        this.wasBoosting = false;
+        this.drill.setScale(1);
+        this.boostButton.setVisible(false);
         retroMusic.setMotor(false);
+        retroMusic.setAmbience(false);
         this.energy = Math.max(0, this.energy);
         if (this.score > this.record.bestScore) {
             this.record.bestScore = this.score;
-            saveDatabase();
         }
+        const elapsedMs = Math.max(0, Math.round(this.activeElapsedMs));
+        const isTimeRecord = complete && elapsedMs > 0 &&
+            (!this.record.bestTimeMs || elapsedMs < this.record.bestTimeMs);
+        if (isTimeRecord) this.record.bestTimeMs = elapsedMs;
+        saveDatabase();
         retroMusic.effect(complete ? "finish" : "fail");
         this.cameras.main.shake(170, 0.005);
         const message = complete ? "CORE MISSION COMPLETE!" : "DRILL ENERGY DEPLETED";
@@ -1178,6 +1518,7 @@ export class ExpeditionScene extends Phaser.Scene {
             usedShaft: this.usesShaft,
             previousBest: this.previousBest,
             previousBestScore: this.previousBestScore,
+            previousBestTimeMs: this.previousBestTimeMs,
             newLayers: this.newLayers,
             collisions: this.collisions,
             samplesCollected: this.collectedSecrets.length,
@@ -1186,7 +1527,11 @@ export class ExpeditionScene extends Phaser.Scene {
             credits: this.credits,
             correctAnswers: this.correctAnswers,
             wrongAnswers: this.wrongAnswers,
+            nearMisses: this.totalNearMisses,
+            bestNearMissCombo: this.bestNearMissCombo,
             upgrades: { ...this.upgrades },
+            elapsedMs,
+            isTimeRecord,
             complete
         }));
     }
@@ -1199,8 +1544,11 @@ export class ExpeditionScene extends Phaser.Scene {
 
     cleanupScene() {
         retroMusic.setMotor(false);
+        retroMusic.setAmbience(false);
         this.quizOverlay?.close();
         this.upgradeOverlay?.close();
+        this.layerBriefing?.close(false);
+        this.howToPlay?.close(false);
         this.scale.off("resize", this.handleResize, this);
         this.input.removeAllListeners();
     }

@@ -185,10 +185,18 @@ export function getLayerEvidence(layer) {
             text: `${layer.age}, approximately ${layer.ma.toLocaleString()} million years old.`,
             note: `${layer.age} • ~${layer.ma.toLocaleString()} Ma`
         },
-        { ...rock, note: layer.rockType },
+        { type: "ROCK", text: rock?.text || `Main rock: ${layer.rockType}.`, note: layer.rockType },
         { type: "FIELD", text: `Field clue: ${layer.feature}.`, note: layer.feature },
-        { ...environment, note: layer.formed },
-        { ...lifeOrEvent, note: concise(lifeOrEvent.text) }
+        {
+            type: "ENV",
+            text: environment?.text || `This unit records ${layer.formed.toLowerCase()}.`,
+            note: layer.formed
+        },
+        {
+            type: lifeOrEvent?.type || "LIFE",
+            text: lifeOrEvent?.text || layer.fossil,
+            note: concise(lifeOrEvent?.text || layer.fossil)
+        }
     ].filter(Boolean);
 }
 

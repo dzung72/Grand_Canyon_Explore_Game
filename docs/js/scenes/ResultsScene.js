@@ -1,16 +1,17 @@
-import { ROCK_LAYERS } from "../data/layers.js?v=4.1.1";
+import { ROCK_LAYERS } from "../data/layers.js?v=4.2.1";
 import {
     database,
     storageAvailable,
     cleanPlayerName,
     createRecord,
     currentRecord,
+    formatRunTime,
     leaderboard,
     saveDatabase
-} from "../services/storage.js?v=4.1.1";
+} from "../services/storage.js?v=4.4.0";
 import { pixelButton } from "../ui/components.js";
 import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js";
-import { retroMusic } from "../services/AudioManager.js?v=4.1.2";
+import { retroMusic } from "../services/AudioManager.js?v=4.5.0";
 
 const Phaser = window.Phaser;
 
@@ -78,12 +79,13 @@ export class ResultsScene extends Phaser.Scene {
 
         const isDepthRecord = this.record.discovered > this.runData.previousBest;
         const isScoreRecord = (this.runData.score || 0) > (this.runData.previousBestScore || 0);
-        if (isDepthRecord || isScoreRecord) {
-            const recordLabel = isDepthRecord && isScoreRecord
-                ? "★ NEW SCORE + DEPTH RECORD! ★"
-                : isScoreRecord
-                    ? "★ NEW SCORE RECORD! ★"
-                    : "★ NEW DEPTH RECORD! ★";
+        const isTimeRecord = Boolean(this.runData.isTimeRecord);
+        if (isDepthRecord || isScoreRecord || isTimeRecord) {
+            const records = [];
+            if (isScoreRecord) records.push("SCORE");
+            if (isDepthRecord) records.push("DEPTH");
+            if (isTimeRecord) records.push("TIME");
+            const recordLabel = `★ NEW ${records.join(" + ")} RECORD! ★`;
             this.add.text(this.width / 2, 78, recordLabel, {
                 fontFamily: font,
                 fontSize: compact ? "14px" : "19px",
@@ -101,8 +103,11 @@ export class ResultsScene extends Phaser.Scene {
             `ACCURACY        ${this.runData.accuracy}%`,
             `SCORE           ${this.runData.score || 0}`,
             `BEST SCORE      ${this.record.bestScore || 0}`,
+            `ACTIVE TIME     ${formatRunTime(this.runData.elapsedMs)}`,
+            `BEST TIME       ${this.record.bestTimeMs ? formatRunTime(this.record.bestTimeMs) : "--:--.-"}`,
             `CREDITS LEFT    ${this.runData.credits || 0}`,
             `ROCK CHECKS     ${this.runData.collisions || 0}`,
+            `NEAR MISSES     ${this.runData.nearMisses || 0} • BEST x${this.runData.bestNearMissCombo || 0}`,
             `QUIZ            ${this.runData.correctAnswers || 0} right / ${this.runData.wrongAnswers || 0} wrong`,
             `CLUES FOUND     ${this.runData.samplesCollected || 0}`,
             `UPGRADES        S${this.runData.upgrades?.speed || 0} M${this.runData.upgrades?.magnet || 0} E${this.runData.upgrades?.earnings || 0}`,
@@ -151,7 +156,8 @@ export class ResultsScene extends Phaser.Scene {
         const boardLines = leaderboard().map((entry, index) =>
             `${index + 1}. ${entry.name.padEnd(12, " ")} ` +
             `${String(entry.score).padStart(4, "0")} pts  ` +
-            `${String(entry.depth).padStart(2, "0")}/${ROCK_LAYERS.length}`
+            `${String(entry.depth).padStart(2, "0")}/${ROCK_LAYERS.length}  ` +
+            `${entry.bestTimeMs ? formatRunTime(entry.bestTimeMs) : "--:--.-"}`
         );
         const boardX = compact ? 20 : this.width * 0.59;
         const boardY = compact
@@ -218,6 +224,7 @@ export class ResultsScene extends Phaser.Scene {
             highScore: oldRecord.highScore,
             bestRunShots: oldRecord.bestRunShots,
             bestScore: oldRecord.bestScore,
+            bestTimeMs: oldRecord.bestTimeMs,
             bestPower: oldRecord.bestPower,
             bestAccuracy: oldRecord.bestAccuracy
         };

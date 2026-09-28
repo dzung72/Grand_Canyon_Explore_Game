@@ -26,7 +26,8 @@ export function createRecord() {
         // `highScore` is kept as the historical depth record for old save files.
         highScore: 0,
         bestRunShots: null,
-        bestScore: 0
+        bestScore: 0,
+        bestTimeMs: null
     };
 }
 
@@ -66,7 +67,16 @@ export function currentRecord() {
     record.highScore = Math.max(Number(record.highScore) || 0, Number(record.discovered) || 0);
     record.bestRunShots ??= record.highScore > 0 ? record.shots : null;
     record.bestScore = Math.max(0, Number(record.bestScore) || 0);
+    record.bestTimeMs = Number(record.bestTimeMs) > 0 ? Number(record.bestTimeMs) : null;
     return record;
+}
+
+export function formatRunTime(milliseconds = 0) {
+    const totalTenths = Math.max(0, Math.floor((Number(milliseconds) || 0) / 100));
+    const minutes = Math.floor(totalTenths / 600);
+    const seconds = Math.floor((totalTenths % 600) / 10);
+    const tenths = totalTenths % 10;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths}`;
 }
 
 export function leaderboard() {
@@ -76,13 +86,16 @@ export function leaderboard() {
             ...record,
             score: Math.max(0, Number(record.bestScore) || 0),
             depth: Math.max(Number(record.highScore) || 0, Number(record.discovered) || 0),
-            scoreShots: Number(record.bestRunShots) || Number(record.shots) || 0
+            scoreShots: Number(record.bestRunShots) || Number(record.shots) || 0,
+            bestTimeMs: Number(record.bestTimeMs) > 0 ? Number(record.bestTimeMs) : null
         }))
         .sort((a, b) =>
             b.score - a.score ||
             b.depth - a.depth ||
             a.scoreShots - b.scoreShots ||
-            b.bestAccuracy - a.bestAccuracy
+            (Number(b.bestAccuracy) || 0) - (Number(a.bestAccuracy) || 0) ||
+            (a.bestTimeMs || Number.POSITIVE_INFINITY) -
+                (b.bestTimeMs || Number.POSITIVE_INFINITY)
         )
         .slice(0, 5);
 }

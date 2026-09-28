@@ -28,7 +28,7 @@ export class UpgradeOverlay {
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
 
         const descriptions = {
-            speed: "+8% movement speed",
+            speed: "+25% movement speed",
             magnet: "+20 px sample range",
             earnings: "+25% sample credits"
         };
@@ -39,7 +39,7 @@ export class UpgradeOverlay {
             const button = this.scene.add.text(
                 x,
                 y,
-                `${choice.type.toUpperCase()}  LV ${upgrades[choice.type]}/5\n${descriptions[choice.type]}\n${choice.maxed ? "MAX LEVEL" : `${choice.cost} CREDITS`}`,
+                `${choice.type.toUpperCase()}  LV ${upgrades[choice.type]}\n${descriptions[choice.type]}\n${choice.cost} CREDITS`,
                 {
                     fontFamily: font,
                     fontSize: compact ? "13px" : "14px",
