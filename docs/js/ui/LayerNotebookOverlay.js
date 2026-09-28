@@ -1,5 +1,6 @@
-import { ROCK_LAYERS } from "../data/layers.js?v=4.6.3";
-import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+import { ROCK_LAYERS } from "../data/layers.js?v=5.1.2";
+import { collectionCount } from "../services/storage.js?v=5.1.2";
+import { GAME_FONT } from "../core/theme.js?v=5.1.2";
 
 const Phaser = window.Phaser;
 
@@ -169,7 +170,12 @@ export class LayerNotebookOverlay {
         const layer = ROCK_LAYERS[this.index];
         const unlocked = Phaser.Math.Clamp(Number(this.getUnlockedCount()) || 0, 0, ROCK_LAYERS.length);
         const available = this.index < unlocked;
-        this.pageText.setText(`${String(this.index + 1).padStart(2, "0")}/${ROCK_LAYERS.length}  •  UNLOCKED ${unlocked}`);
+        // Bộ sưu tập: 10 tầng × 5 mẫu, đếm qua mọi lượt chơi.
+        this.pageText.setText(
+            `${String(this.index + 1).padStart(2, "0")}/${ROCK_LAYERS.length}` +
+            `  •  UNLOCKED ${unlocked}` +
+            `  •  SAMPLES ${collectionCount()}/${ROCK_LAYERS.length * 5}`
+        );
 
         if (!available) {
             this.layerTitle.setText("LOCKED STRATUM");

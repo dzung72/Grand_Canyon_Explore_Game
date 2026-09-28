@@ -1,6 +1,6 @@
-import { ROCK_LAYERS, getLayerEvidence } from "../data/layers.js?v=4.6.3";
-import { getLayerChallenge } from "./layerChallenges.js?v=4.6.3";
-import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+import { ROCK_LAYERS, getLayerEvidence } from "../data/layers.js?v=5.1.2";
+import { getLayerChallenge } from "./layerChallenges.js?v=5.1.2";
+import { GAME_FONT } from "../core/theme.js?v=5.1.2";
 
 const Phaser = window.Phaser;
 
@@ -18,6 +18,20 @@ function shadeColor(color, factor) {
     const green = Math.min(255, Math.round(((color >> 8) & 0xff) * factor));
     const blue = Math.min(255, Math.round((color & 0xff) * factor));
     return (red << 16) | (green << 8) | blue;
+}
+
+// Hộp va chạm của mũi khoan hẹp hơn phần hình 15%. Người chơi không đo pixel,
+// họ chỉ cảm nhận — và cảm giác "mình đâu có chạm" là thứ giết chết niềm tin.
+const DRILL_HIT_WIDTH = 48;
+const DRILL_HIT_HEIGHT = 72;
+
+function drillHitBounds(x, y) {
+    return new Phaser.Geom.Rectangle(
+        x - DRILL_HIT_WIDTH / 2,
+        y - DRILL_HIT_HEIGHT / 2 - 6,
+        DRILL_HIT_WIDTH,
+        DRILL_HIT_HEIGHT
+    );
 }
 
 export class EvidenceCourse {
@@ -702,7 +716,7 @@ export class EvidenceCourse {
     }
 
     resolveMazeCollision(layerIndex, beforeX, beforeY, nextX, nextY) {
-        const drillBounds = new Phaser.Geom.Rectangle(nextX - 25, nextY - 25, 50, 50);
+        const drillBounds = new Phaser.Geom.Rectangle(nextX - 21, nextY - 21, 42, 42);
         const hit = this.mazeWalls.some((wall) =>
             wall.layerIndex === layerIndex &&
             Phaser.Geom.Intersects.RectangleToRectangle(drillBounds, wall.bounds)
@@ -772,14 +786,14 @@ export class EvidenceCourse {
     }
 
     findObstacleCollision(drillX, drillY) {
-        const drillBounds = new Phaser.Geom.Rectangle(drillX - 28, drillY - 42, 56, 84);
+        const drillBounds = drillHitBounds(drillX, drillY);
         return this.obstacles.find((obstacle) =>
             obstacle.active && Phaser.Geom.Intersects.RectangleToRectangle(drillBounds, obstacle.bounds)
         );
     }
 
     trackNearMiss(drillX, drillY, margin = 24) {
-        const drillBounds = new Phaser.Geom.Rectangle(drillX - 28, drillY - 42, 56, 84);
+        const drillBounds = drillHitBounds(drillX, drillY);
         let completedNearMiss = null;
         this.obstacles.forEach((obstacle) => {
             if (!obstacle.active || obstacle.nearMissed) return false;

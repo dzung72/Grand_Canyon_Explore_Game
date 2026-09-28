@@ -1,4 +1,4 @@
-import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+import { GAME_FONT } from "../core/theme.js?v=5.1.2";
 
 const Phaser = window.Phaser;
 
@@ -7,15 +7,13 @@ export class LayerBriefingOverlay {
         this.scene = scene;
         this.getPlayWidth = getPlayWidth;
         this.items = [];
-        this.timer = null;
         this.startedAt = 0;
-        this.duration = 4000;
         this.minimumSkipDelay = 700;
         this.onComplete = null;
         this.isOpen = false;
     }
 
-    open({ layer, index, total, challenge, isNew }, onComplete) {
+    open({ layer, index, total, challenge, isNew, story = [] }, onComplete) {
         this.close(false);
         this.isOpen = true;
         this.onComplete = onComplete;
@@ -26,7 +24,7 @@ export class LayerBriefingOverlay {
         const compact = playWidth < 620;
         const centerX = playWidth / 2;
         const panelWidth = Math.min(playWidth - 28, compact ? 430 : 650);
-        const panelHeight = compact ? 286 : 304;
+        const panelHeight = compact ? 330 : 348;
         const top = Math.max(92, (screenHeight - panelHeight) / 2);
         const font = GAME_FONT;
 
@@ -69,19 +67,48 @@ export class LayerBriefingOverlay {
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(102));
 
         this.add(this.scene.add.text(centerX, top + (compact ? 92 : 98),
-            `~${layer.ma.toLocaleString()} Ma  •  ${layer.rockType}\n\n${challenge.name}\n${challenge.tip}`,
+            `~${layer.ma.toLocaleString()} Ma  •  ${layer.rockType}`,
             {
                 fontFamily: font,
-                fontSize: compact ? "18px" : "22px",
-                color: "#eaf2f8",
-                lineSpacing: compact ? 8 : 10,
+                fontSize: compact ? "16px" : "19px",
+                color: "#93a39e",
                 align: "center",
                 wordWrap: { width: panelWidth - 42, useAdvancedWrap: true }
             }
         ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(102));
 
+        // Phần truyện là lý do người chơi dừng lại đọc — cho nó chỗ rộng nhất.
+        const storyText = this.add(this.scene.add.text(
+            centerX,
+            top + (compact ? 126 : 136),
+            story.join("\n"),
+            {
+                fontFamily: font,
+                fontSize: compact ? "19px" : "23px",
+                fontStyle: "italic",
+                color: "#f0c66a",
+                align: "center",
+                lineSpacing: compact ? 9 : 12,
+                wordWrap: { width: panelWidth - 48, useAdvancedWrap: true }
+            }
+        ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(102));
+
+        this.add(this.scene.add.text(
+            centerX,
+            storyText.y + storyText.height + (compact ? 14 : 18),
+            `${challenge.name}  •  ${challenge.tip}`,
+            {
+                fontFamily: font,
+                fontSize: compact ? "15px" : "18px",
+                color: "#cdd5d0",
+                align: "center",
+                lineSpacing: 6,
+                wordWrap: { width: panelWidth - 42, useAdvancedWrap: true }
+            }
+        ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(102));
+
         this.countdown = this.add(this.scene.add.text(centerX, top + panelHeight - 42,
-            "AUTO 4.0s  •  click to continue",
+            "READING…",
             {
                 fontFamily: font,
                 fontSize: compact ? "16px" : "18px",
@@ -92,19 +119,14 @@ export class LayerBriefingOverlay {
             }
         ).setOrigin(0.5).setScrollFactor(0).setDepth(103).setInteractive({ useHandCursor: true }));
         this.countdown.on("pointerdown", () => this.tryContinue());
-
-        this.timer = this.scene.time.delayedCall(this.duration, () => this.finish());
     }
 
     update() {
         if (!this.isOpen || !this.countdown) return;
         const elapsed = this.scene.time.now - this.startedAt;
-        const remaining = Math.max(0, this.duration - elapsed) / 1000;
         const canSkip = elapsed >= this.minimumSkipDelay;
         this.countdown
-            .setText(canSkip
-                ? `CONTINUE  •  AUTO ${remaining.toFixed(1)}s`
-                : `READING…  ${remaining.toFixed(1)}s`)
+            .setText(canSkip ? "CONTINUE" : "READING…")
             .setColor(canSkip ? "#91eadc" : "#ffd166");
     }
 
@@ -129,8 +151,6 @@ export class LayerBriefingOverlay {
 
     close(runCallback = false) {
         const callback = runCallback ? this.onComplete : null;
-        this.timer?.remove(false);
-        this.timer = null;
         this.items.forEach((item) => item?.destroy());
         this.items = [];
         this.countdown = null;

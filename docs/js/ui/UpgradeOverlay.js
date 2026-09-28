@@ -1,4 +1,4 @@
-import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+import { GAME_FONT } from "../core/theme.js?v=5.1.2";
 
 export class UpgradeOverlay {
     constructor(scene, getPlayWidth) {
@@ -7,7 +7,7 @@ export class UpgradeOverlay {
         this.items = [];
     }
 
-    open({ layer, credits, upgrades, choices }, onChoice) {
+    open({ layer, credits, upgrades, choices, stars = 1, noHits = false, underTime = false, targetSeconds = 45 }, onChoice) {
         this.close();
         const width = Math.max(260, this.getPlayWidth());
         const height = this.scene.viewHeight;
@@ -25,26 +25,52 @@ export class UpgradeOverlay {
         this.add(this.scene.add.text(centerX, top + 18, "LAYER COMPLETE", {
             fontFamily: font, fontSize: compact ? "28px" : "36px", fontStyle: "bold", color: "#ffd166"
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
-        this.add(this.scene.add.text(centerX, top + 54, `${layer.name} • ${layer.ma} Ma\nCREDITS: ${credits}`, {
-            fontFamily: font, fontSize: compact ? "18px" : "22px", color: "#f7fbff", align: "center", lineSpacing: 6
-        }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
+        // Ba sao nói ngay người chơi thiếu gì để lần sau làm tốt hơn.
+        this.add(this.scene.add.text(
+            centerX,
+            top + (compact ? 50 : 54),
+            `${"\u2605".repeat(stars)}${"\u2606".repeat(3 - stars)}`,
+            {
+                fontFamily: font,
+                fontSize: compact ? "26px" : "32px",
+                fontStyle: "bold",
+                color: "#f0c66a",
+                letterSpacing: 4
+            }
+        ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
 
+        this.add(this.scene.add.text(
+            centerX,
+            top + (compact ? 84 : 92),
+            `${layer.name} • ${layer.ma} Ma  •  CREDITS ${credits}\n` +
+            `${noHits ? "\u2605" : "\u2606"} no rock hits   ` +
+            `${underTime ? "\u2605" : "\u2606"} under ${targetSeconds}s`,
+            {
+                fontFamily: font,
+                fontSize: compact ? "16px" : "19px",
+                color: "#cdd5d0",
+                align: "center",
+                lineSpacing: 6
+            }
+        ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
+
+        // Thẻ có bề rộng cố định; mô tả phải ngắn để không bị cắt mất chữ.
         const descriptions = {
-            speed: "+25% movement speed",
-            magnet: "+20 px sample range",
-            earnings: "+25% sample credits"
+            speed: "+25% move speed",
+            magnet: "+20px reach",
+            earnings: "+25% credits"
         };
         choices.forEach((choice, index) => {
             const cardWidth = compact ? panelWidth - 36 : (panelWidth - 64) / 3;
             const x = compact ? centerX : centerX - panelWidth / 2 + 22 + cardWidth / 2 + index * (cardWidth + 10);
-            const y = compact ? top + 112 + index * 105 : top + 118;
+            const y = compact ? top + 150 + index * 105 : top + 156;
             const button = this.scene.add.text(
                 x,
                 y,
                 `${choice.type.toUpperCase()}  LV ${upgrades[choice.type]}\n${descriptions[choice.type]}\n${choice.cost} CREDITS`,
                 {
                     fontFamily: font,
-                    fontSize: compact ? "17px" : "19px",
+                    fontSize: compact ? "16px" : "18px",
                     fontStyle: "bold",
                     color: choice.available ? "#101923" : "#8e7f78",
                     backgroundColor: choice.available ? "#ffd166" : "#332a2e",

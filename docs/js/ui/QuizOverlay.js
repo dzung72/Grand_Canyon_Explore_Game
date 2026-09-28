@@ -1,4 +1,4 @@
-import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+import { GAME_FONT } from "../core/theme.js?v=5.1.2";
 
 const Phaser = window.Phaser;
 

@@ -2,7 +2,9 @@ const STORAGE_KEY = "grand-canyon-drill-v1";
 
 export let database = {
     currentPlayer: "EXPLORER",
-    players: { EXPLORER: createRecord() }
+    players: { EXPLORER: createRecord() },
+    tutorialSeen: false,
+    hintsSeen: {}
 };
 
 export let storageAvailable = true;
@@ -27,7 +29,10 @@ export function createRecord() {
         highScore: 0,
         bestRunShots: null,
         bestScore: 0,
-        bestTimeMs: null
+        bestTimeMs: null,
+        // Sao từng tầng và bộ sưu tập mẫu vật sống qua mọi lượt chơi.
+        layerStars: {},
+        collection: {}
     };
 }
 
@@ -41,6 +46,10 @@ export function loadDatabase() {
         }
         parsed.currentPlayer = cleanPlayerName(parsed.currentPlayer);
         parsed.players[parsed.currentPlayer] ||= createRecord();
+        parsed.tutorialSeen = Boolean(parsed.tutorialSeen);
+        parsed.hintsSeen = parsed.hintsSeen && typeof parsed.hintsSeen === "object"
+            ? parsed.hintsSeen
+            : {};
         database = parsed;
     } catch (error) {
         storageAvailable = false;
@@ -59,6 +68,30 @@ export function saveDatabase() {
     }
 }
 
+// The card tutorial runs once. After that the start menu offers it on request.
+export function hasSeenTutorial() {
+    return Boolean(database.tutorialSeen);
+}
+
+export function markTutorialSeen() {
+    if (database.tutorialSeen) return;
+    database.tutorialSeen = true;
+    saveDatabase();
+}
+
+// In-play hints (boost, near miss) appear the first time the player meets them
+// and then stay gone for good.
+export function hasSeenHint(name) {
+    return Boolean(database.hintsSeen?.[name]);
+}
+
+export function markHintSeen(name) {
+    database.hintsSeen ||= {};
+    if (database.hintsSeen[name]) return;
+    database.hintsSeen[name] = true;
+    saveDatabase();
+}
+
 export function currentRecord() {
     const player = cleanPlayerName(database.currentPlayer);
     database.currentPlayer = player;
@@ -68,7 +101,46 @@ export function currentRecord() {
     record.bestRunShots ??= record.highScore > 0 ? record.shots : null;
     record.bestScore = Math.max(0, Number(record.bestScore) || 0);
     record.bestTimeMs = Number(record.bestTimeMs) > 0 ? Number(record.bestTimeMs) : null;
+    if (!record.layerStars || typeof record.layerStars !== "object") record.layerStars = {};
+    if (!record.collection || typeof record.collection !== "object") record.collection = {};
     return record;
+}
+
+// Sao cao nhất từng đạt ở mỗi tầng được giữ lại, không bị lượt chơi kém ghi đè.
+export function recordLayerStars(layerIndex, stars) {
+    const record = currentRecord();
+    const best = Math.max(Number(record.layerStars[layerIndex]) || 0, stars);
+    if (best === record.layerStars[layerIndex]) return best;
+    record.layerStars[layerIndex] = best;
+    saveDatabase();
+    return best;
+}
+
+export function layerStars(layerIndex) {
+    return Number(currentRecord().layerStars[layerIndex]) || 0;
+}
+
+export function totalStars() {
+    return Object.values(currentRecord().layerStars)
+        .reduce((sum, value) => sum + (Number(value) || 0), 0);
+}
+
+// Bộ sưu tập mẫu vật: 10 tầng × 5 mẫu, nhớ mãi qua các lượt chơi.
+export function markSampleFound(layerIndex, clueIndex) {
+    const record = currentRecord();
+    const key = `${layerIndex}-${clueIndex}`;
+    if (record.collection[key]) return false;
+    record.collection[key] = true;
+    saveDatabase();
+    return true;
+}
+
+export function hasSampleFound(layerIndex, clueIndex) {
+    return Boolean(currentRecord().collection[`${layerIndex}-${clueIndex}`]);
+}
+
+export function collectionCount() {
+    return Object.keys(currentRecord().collection).length;
 }
 
 export function formatRunTime(milliseconds = 0) {

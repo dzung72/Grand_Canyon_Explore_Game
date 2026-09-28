@@ -1,4 +1,4 @@
-# Grand Canyon Drill V4.6 — Progressive Field Expedition
+# Grand Canyon Drill — Progressive Field Expedition
 
 A small educational Phaser game about exploring ten representative rock units exposed in Grand Canyon National Park.
 
@@ -10,7 +10,7 @@ A small educational Phaser game about exploring ten representative rock units ex
 4. After impact, move freely in four directions with `WASD`, arrow keys, or the four sides of a touch screen.
 5. Use the permanent field note on the right while collecting five glowing samples: age, rock, field feature, environment, and life/event.
 6. Each sample gives 100 score and credits. A fuel can restores up to 25% energy. Layers 1–2 contain one can each; layers 3–10 contain two cans spaced across the route. Base movement fuel drain is reduced by 25% from the previous build, and Boost drain drops from 8% to 6% of the full tank per second. Each Speed level adds a clearly visible 25% movement increase; Magnet and Earnings upgrades also improve the current run.
-7. A four-second briefing introduces each layer; it can be skipped after 0.7 seconds and the five-line note remains visible.
+7. A story briefing introduces each layer and stays open until the player selects `CONTINUE`; the button becomes available after 0.7 seconds and the five-line note remains visible.
 8. Hitting one of four sparse rocks pauses the drill and asks a three-choice question taken directly from the visible note.
 9. A correct answer gives 50 score; a wrong answer removes 100 score and slows the drill for two seconds.
 10. Collecting all five samples opens a one-purchase upgrade screen before the next layer. Every upgrade costs 200 credits, has no level cap, and can always be skipped.
@@ -18,7 +18,7 @@ A small educational Phaser game about exploring ten representative rock units ex
 
 Hold `Space` or the on-screen `BOOST` button while steering for 2.15× movement speed. Boost consumes an additional 6% of the full fuel tank per second. A Near Miss is awarded only after the drill enters a rock's narrow safety margin and exits it again without ever touching the rock. Movement stays at normal speed, a spatial vehicle-style whoosh confirms the clean pass, `50 × combo` points are awarded, and chains reach `x4` within 2.5 seconds. Contact triggers the quiz immediately and cancels the pending Near Miss.
 
-Every new expedition opens with a concise How to Play panel covering launch, movement, samples, Rock Checks, fuel, Boost, and Near Miss in six short lines. Press `Space` or select `START EXPEDITION` to continue. The simplified HUD keeps only Run Time, Layer Time, samples, fuel, hits, score, and credits; clocks pause during briefings, Rock Checks, and upgrades.
+The first expedition opens with a five-card animated tutorial covering launch, steering, samples, fuel, and Rock Checks. Returning players land on a compact start menu and can replay the tutorial at any time. Select `START EXPEDITION` on the final card to continue. Story briefings and major geologic time-gap interludes never close automatically; the player dismisses each one with `CONTINUE` or `Space`. The simplified HUD keeps only Run Time, Layer Time, samples, fuel, hits, score, and credits; clocks pause during story briefings, time-gap interludes, Rock Checks, and upgrades.
 
 The field note occupies a protected panel on the right and shows five scannable lines: Age, Rock, Look, Formed, and Life/Event. The optional notebook keeps a short scientific summary for deeper reading. All learning text, HUD labels, overlays, and results use the larger Atkinson Hyperlegible Next typeface with a system-font fallback for clear projection. The drill cannot enter the note panel. The note is hidden during each rock quiz so the question tests recall, then returns immediately after the answer. Geological landmarks are labelled in the rock. Audio unlocks on the first mouse, touch, or keyboard action and has separate Music and SFX controls. Drill movement is intentionally quiet, while a subtle underground ambience, impact boom, fuel, collectible, quiz, upgrade, transition, and Near Miss whoosh provide feedback. A completed or failed run saves the player's best score; replaying never erases unlocked field notes.
 
@@ -46,13 +46,17 @@ js/
 ├── main.js                 # Phaser startup and scene registration
 ├── core/status.js          # Visible errors and global error handling
 ├── data/layers.js          # Scientific layer data and game resistance
+├── data/story.js           # Layer story beats and major geologic time gaps
 ├── effects/ImpactEffects.js # Impact shockwave, debris, and dust
 ├── gameplay/EvidenceCourse.js # Five evidence samples and sparse rocks in each layer
 ├── gameplay/layerChallenges.js # Per-layer movement and environmental difficulty data
 ├── services/AudioManager.js # Original Web Audio retro-desert music loop and mute state
 ├── services/storage.js     # Local progress and leaderboard data
-├── ui/components.js        # Reusable drill and pixel button components
-├── ui/HowToPlayOverlay.js  # Responsive pre-game controls and rules panel
+├── ui/components.js        # Reusable drill, panel button, and screen-pinning helpers
+├── ui/HowToPlayOverlay.js  # Five-card onboarding carousel
+├── ui/tutorialArt.js       # Animated illustration for each onboarding card
+├── ui/StartMenuOverlay.js  # Play / How to play menu for returning players
+├── ui/TimeGapOverlay.js    # Great Unconformity and nonconformity interludes
 ├── ui/LayerNotebookOverlay.js # Unlockable observation/evidence notebook
 ├── ui/LayerBriefingOverlay.js # Timed, skippable introduction to each layer
 ├── ui/QuizOverlay.js       # Note-based three-choice rock questions

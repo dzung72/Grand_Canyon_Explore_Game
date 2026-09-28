@@ -1,4 +1,8 @@
-import { ROCK_LAYERS } from "../data/layers.js";
+// Dải đá vẽ tràn ra ngoài mép màn hình một chút để camera giật ngang khi va
+// chạm không để lộ nền trống.
+export const WORLD_BLEED = 48;
+
+import { ROCK_LAYERS } from "../data/layers.js?v=5.1.2";
 
 const Phaser = window.Phaser;
 
@@ -33,7 +37,7 @@ export class ExpeditionWorld {
         const band = Math.ceil(height / colors.length);
 
         colors.forEach((color, index) => {
-            g.fillStyle(color, 1).fillRect(0, top + index * band, this.width, band + 2);
+            g.fillStyle(color, 1).fillRect(-WORLD_BLEED, top + index * band, this.width + WORLD_BLEED * 2, band + 2);
         });
 
         const unit = Math.max(3, Math.round(Math.min(this.width, this.height) / 190));
@@ -83,18 +87,18 @@ export class ExpeditionWorld {
         const g = this.background;
         ROCK_LAYERS.forEach((layer, index) => {
             const y = this.layerStartY + index * this.layerHeight;
-            g.fillStyle(layer.color, 1).fillRect(0, y, this.width, this.layerHeight + 1);
-            g.fillStyle(0x211720, 0.42).fillRect(0, y, this.width, 5);
+            g.fillStyle(layer.color, 1).fillRect(-WORLD_BLEED, y, this.width + WORLD_BLEED * 2, this.layerHeight + 1);
+            g.fillStyle(0x211720, 0.42).fillRect(-WORLD_BLEED, y, this.width + WORLD_BLEED * 2, 5);
             this.drawLayerTexture(g, layer, y);
         });
 
         g.fillStyle(0x17121b, 1).fillRect(
-            0,
+            -WORLD_BLEED,
             this.layerStartY + ROCK_LAYERS.length * this.layerHeight,
-            this.width,
+            this.width + WORLD_BLEED * 2,
             this.height * 0.6
         );
-        g.fillStyle(0xf0b45f, 1).fillRect(0, this.surfaceY - 12, this.width, 14);
+        g.fillStyle(0xf0b45f, 1).fillRect(-WORLD_BLEED, this.surfaceY - 12, this.width + WORLD_BLEED * 2, 14);
     }
 
     drawLayerTexture(g, layer, y) {

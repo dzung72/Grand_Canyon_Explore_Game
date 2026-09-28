@@ -1,18 +1,33 @@
-import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=4.6.3";
-import { database, currentRecord, formatRunTime, saveDatabase } from "../services/storage.js?v=4.4.0";
-import { makeDrill } from "../ui/components.js?v=4.6.4";
-import { showStatus } from "../core/status.js";
-import { GAME_FONT } from "../core/theme.js?v=4.6.1";
-import { ExpeditionWorld } from "../world/ExpeditionWorld.js";
-import { ImpactEffects } from "../effects/ImpactEffects.js?v=4.4.0";
-import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=4.6.4";
-import { getLayerChallenge } from "../gameplay/layerChallenges.js?v=4.6.3";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.4";
-import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=4.6.4";
-import { QuizOverlay } from "../ui/QuizOverlay.js?v=4.6.4";
-import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=4.6.4";
-import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=4.6.4";
-import { retroMusic } from "../services/AudioManager.js?v=4.6.1";
+import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=5.1.2";
+import { storyFor, timeGapFor } from "../data/story.js?v=5.1.2";
+import {
+    database,
+    currentRecord,
+    formatRunTime,
+    saveDatabase,
+    hasSeenTutorial,
+    markTutorialSeen,
+    hasSeenHint,
+    markHintSeen,
+    recordLayerStars,
+    markSampleFound,
+    collectionCount
+} from "../services/storage.js?v=5.1.2";
+import { makeDrill } from "../ui/components.js?v=5.1.2";
+import { showStatus } from "../core/status.js?v=5.1.2";
+import { GAME_FONT, UI } from "../core/theme.js?v=5.1.2";
+import { ExpeditionWorld, WORLD_BLEED } from "../world/ExpeditionWorld.js?v=5.1.2";
+import { ImpactEffects } from "../effects/ImpactEffects.js?v=5.1.2";
+import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=5.1.2";
+import { getLayerChallenge } from "../gameplay/layerChallenges.js?v=5.1.2";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=5.1.2";
+import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=5.1.2";
+import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=5.1.2";
+import { QuizOverlay } from "../ui/QuizOverlay.js?v=5.1.2";
+import { TimeGapOverlay } from "../ui/TimeGapOverlay.js?v=5.1.2";
+import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=5.1.2";
+import { StartMenuOverlay } from "../ui/StartMenuOverlay.js?v=5.1.2";
+import { retroMusic } from "../services/AudioManager.js?v=5.1.2";
 
 const Phaser = window.Phaser;
 
@@ -56,6 +71,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.layerSamples = ROCK_LAYERS.map(() => new Set());
         this.completedLayers = new Set();
         this.briefedLayers = new Set();
+        this.shownTimeGaps = new Set();
         this.collectedSecrets = [];
         this.score = 0;
         this.credits = 0;
@@ -66,6 +82,16 @@ export class ExpeditionScene extends Phaser.Scene {
         this.layerElapsedMs = 0;
         this.energyDrainFlashAt = 0;
         this.triggeredEnergyHazards = new Set();
+        this.boostHintDone = false;
+        this.hitstopUntil = 0;
+        this.layerHits = 0;
+        this.layerStarTargetMs = 45000;
+        this.cameraKickX = 0;
+        this.cameraKickY = 0;
+        this.appliedKickY = 0;
+        this.cameraLeadY = 0;
+        this.allowVibration = Boolean(navigator.vibrate) &&
+            Boolean(this.sys.game.device.input.touch);
 
         this.viewWidth = Math.max(320, this.scale.width);
         this.viewHeight = Math.max(420, this.scale.height);
@@ -84,11 +110,17 @@ export class ExpeditionScene extends Phaser.Scene {
             360
         ));
 
-        this.cameras.main.setBounds(0, 0, this.viewWidth, this.worldHeight);
+        this.cameras.main.setBounds(
+            -WORLD_BLEED,
+            0,
+            this.viewWidth + WORLD_BLEED * 2,
+            this.worldHeight
+        );
         this.cameras.main.alpha = 1;
         this.cameras.main.visible = true;
         this.cameras.main.zoom = 1;
         this.cameras.main.rotation = 0;
+        this.cameras.main.scrollX = 0;
         this.cameras.main.scrollY = this.initialCameraY;
         this.world = new ExpeditionWorld(this, {
             width: this.viewWidth,
@@ -113,18 +145,23 @@ export class ExpeditionScene extends Phaser.Scene {
         this.drill.input.cursor = "grab";
 
         this.createInterface();
+        this.layoutTopButtons();
+        this.comboGlow = this.add.graphics().setScrollFactor(0).setDepth(94);
+        this.createDeepTimeGauge();
         this.notebook = new LayerNotebookOverlay(this, () => currentRecord().discovered);
         this.layerBriefing = new LayerBriefingOverlay(this, () => this.playAreaRight || this.viewWidth);
         this.quizOverlay = new QuizOverlay(this, () => this.playAreaRight || this.viewWidth);
+        this.timeGap = new TimeGapOverlay(this);
         this.upgradeOverlay = new UpgradeOverlay(this, () => this.playAreaRight || this.viewWidth);
         this.howToPlay = new HowToPlayOverlay(this);
+        this.startMenu = new StartMenuOverlay(this);
         this.bindInput();
         this.resetRound();
-        this.openHowToPlay();
+        this.openIntro();
 
         this.scale.on("resize", this.handleResize, this);
         this.events.once("shutdown", this.cleanupScene, this);
-        showStatus(`Phaser ${Phaser.VERSION} ready • V4.6 expedition`, "success");
+        showStatus("Ready", "success");
     }
 
     createInterface() {
@@ -134,7 +171,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.titleText = this.add.text(
             18,
             16,
-            this.viewWidth < 650 ? "GC DRILL // V4.6" : "GRAND CANYON DRILL // V4.6",
+            this.viewWidth < 650 ? "GRAND CANYON DRILL" : "GRAND CANYON DRILL",
             {
             fontFamily: font,
             fontSize: this.viewWidth < 650 ? "20px" : "30px",
@@ -149,15 +186,18 @@ export class ExpeditionScene extends Phaser.Scene {
             color: "#ffd166",
             shadow
         }).setScrollFactor(0).setDepth(40);
-        this.helpText = this.add.text(this.viewWidth / 2, this.viewHeight - 28, "", {
+        this.helpText = this.add.text(this.viewWidth / 2, this.viewHeight - 12, "", {
             fontFamily: font,
             fontSize: this.viewWidth < 650 ? "16px" : "20px",
             fontStyle: "bold",
             color: "#f7fbff",
             backgroundColor: "#142330f2",
             padding: { x: 12, y: 8 },
+            align: "center",
+            // Dòng trạng thái xuống hàng thay vì bị cắt mất chữ ở mép màn hẹp.
+            wordWrap: { width: this.viewWidth - 44, useAdvancedWrap: true },
             shadow
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(40);
+        }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(40);
 
         this.powerGraphics = this.add.graphics().setScrollFactor(0).setDepth(40);
         this.powerText = this.add.text(0, 0, "", {
@@ -168,22 +208,28 @@ export class ExpeditionScene extends Phaser.Scene {
             shadow
         }).setScrollFactor(0).setDepth(41);
 
-        this.fullscreenButton = this.add.text(this.viewWidth - 16, 16, "[ FULLSCREEN ]", {
-            fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "15px" : "18px",
-            fontStyle: "bold",
-            color: "#f7fbff",
-            backgroundColor: "#1b2b39f2",
-            padding: { x: 9, y: 7 }
-        }).setOrigin(1, 0).setScrollFactor(0).setDepth(45).setInteractive({ useHandCursor: true });
+        const narrow = this.viewWidth < 650;
+        this.fullscreenButton = this.add.text(
+            this.viewWidth - (narrow ? 10 : 16),
+            narrow ? 10 : 16,
+            narrow ? "[ FULL ]" : "[ FULLSCREEN ]",
+            {
+                fontFamily: font,
+                fontSize: narrow ? "15px" : "18px",
+                fontStyle: "bold",
+                color: "#f7fbff",
+                backgroundColor: "#1b2b39f2",
+                padding: { x: 9, y: 7 }
+            }
+        ).setOrigin(1, 0).setScrollFactor(0).setDepth(45).setInteractive({ useHandCursor: true });
         this.fullscreenButton.on("pointerdown", () => {
             if (this.scale.isFullscreen) this.scale.stopFullscreen();
             else this.scale.startFullscreen();
         });
 
         this.musicButton = this.add.text(
-            this.viewWidth - (this.viewWidth < 650 ? 126 : 158),
-            16,
+            this.viewWidth - (narrow ? 10 : 158),
+            narrow ? 44 : 16,
             `[ ${retroMusic.label()} ]`,
             {
                 fontFamily: font,
@@ -198,11 +244,12 @@ export class ExpeditionScene extends Phaser.Scene {
             event?.stopPropagation();
             await retroMusic.toggle();
             this.musicButton.setText(`[ ${retroMusic.label()} ]`);
+            this.layoutTopButtons();
         });
 
         this.sfxButton = this.add.text(
-            this.viewWidth - (this.viewWidth < 650 ? 126 : 270),
-            this.viewWidth < 650 ? 52 : 16,
+            this.viewWidth - (narrow ? 10 : 270),
+            narrow ? 78 : 16,
             `[ ${retroMusic.sfxLabel()} ]`,
             {
                 fontFamily: font,
@@ -217,11 +264,12 @@ export class ExpeditionScene extends Phaser.Scene {
             event?.stopPropagation();
             await retroMusic.toggleSfx();
             this.sfxButton.setText(`[ ${retroMusic.sfxLabel()} ]`);
+            this.layoutTopButtons();
         });
 
         this.fieldNotesButton = this.add.text(
-            this.viewWidth - (this.viewWidth < 650 ? 12 : 380),
-            this.viewWidth < 650 ? 88 : 16,
+            this.viewWidth - (narrow ? 10 : 380),
+            narrow ? 112 : 16,
             "[ FIELD NOTES ]",
             {
                 fontFamily: font,
@@ -260,12 +308,19 @@ export class ExpeditionScene extends Phaser.Scene {
         }).setScrollFactor(0).setDepth(36).setVisible(false);
         this.economyText = this.add.text(0, 12, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "17px" : "21px",
+            fontSize: this.viewWidth < 650 ? "16px" : "19px",
             fontStyle: "bold",
-            color: "#ffd166",
-            align: "right"
-        }).setOrigin(1, 0).setScrollFactor(0).setDepth(37).setVisible(false);
+            color: "#91eadc",
+            backgroundColor: "#101923e6",
+            padding: { x: 8, y: 4 }
+        }).setOrigin(0, 0).setScrollFactor(0).setDepth(37).setVisible(false);
         this.energyGraphics = this.add.graphics().setScrollFactor(0).setDepth(36).setVisible(false);
+        this.energyLabel = this.add.text(0, 0, "", {
+            fontFamily: font,
+            fontSize: this.viewWidth < 650 ? "14px" : "16px",
+            fontStyle: "bold",
+            color: "#cdd5d0"
+        }).setOrigin(1, 1).setScrollFactor(0).setDepth(37).setVisible(false);
         this.laneGraphics = this.add.graphics().setScrollFactor(0).setDepth(36).setVisible(false);
 
         this.layerBanner = this.add.text(this.viewWidth / 2, 96, "", {
@@ -283,6 +338,9 @@ export class ExpeditionScene extends Phaser.Scene {
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(44).setAlpha(0);
 
         const compact = this.viewWidth < 720;
+        // Trên màn hẹp, panel ghi chú cố định ăn hơn nửa chiều ngang. Bỏ nó đi,
+        // nút FIELD NOTES vẫn mở được sổ tay đầy đủ bất cứ lúc nào.
+        this.usesSideNote = !compact;
         const noteWidth = compact
             ? Math.min(270, this.viewWidth * 0.48)
             : Math.min(420, this.viewWidth * 0.32);
@@ -291,8 +349,11 @@ export class ExpeditionScene extends Phaser.Scene {
         const noteHeight = Math.min(450, this.viewHeight - noteTop - 24);
         this.noteLeft = noteLeft;
         this.noteWidth = noteWidth;
-        this.playAreaRight = Math.max(138, noteLeft - 18);
-        this.economyText.setPosition(this.playAreaRight - 4, 12);
+        this.playAreaRight = this.usesSideNote
+            ? Math.max(138, noteLeft - 18)
+            : this.viewWidth - 14;
+        // Chuỗi near miss nằm ngay dưới khối HUD bên trái, không tranh chỗ với nút.
+        this.economyText.setPosition(16, 12);
         this.currentNotePanel = this.add.rectangle(
             noteLeft,
             noteTop,
@@ -317,7 +378,7 @@ export class ExpeditionScene extends Phaser.Scene {
         }).setScrollFactor(0).setDepth(39).setVisible(false);
         this.currentNoteHint = this.add.text(
             noteLeft + 13,
-            noteTop + noteHeight - 31,
+            noteTop + noteHeight - 44,
             "Collect a sample to reveal its field note.",
             {
                 fontFamily: font,
@@ -330,7 +391,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
         this.boostButton = this.add.text(
             18,
-            this.viewHeight - 82,
+            this.viewHeight - 74,
             "[ HOLD BOOST • SPACE ]",
             {
                 fontFamily: font,
@@ -374,6 +435,30 @@ export class ExpeditionScene extends Phaser.Scene {
             stroke: "#172433",
             strokeThickness: 2
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(59).setVisible(false);
+    }
+
+    // Trước đây bốn nút đặt ở các khoảng cách cố định đoán sẵn, nên nhãn dài
+    // ngắn khác nhau là chúng dính vào nhau. Giờ đo rồi xếp.
+    layoutTopButtons() {
+        const buttons = [
+            this.fullscreenButton,
+            this.musicButton,
+            this.sfxButton,
+            this.fieldNotesButton
+        ].filter(Boolean);
+        if (!buttons.length) return;
+        if (this.viewWidth < 650) {
+            buttons.forEach((button, index) => button.setPosition(this.viewWidth - 10, 10 + index * 34));
+            this.topButtonsLeft = this.viewWidth - 10 -
+                Math.max(...buttons.map((button) => button.width));
+            return;
+        }
+        let right = this.viewWidth - 16;
+        buttons.forEach((button) => {
+            button.setPosition(right, 16);
+            right -= button.width + 12;
+        });
+        this.topButtonsLeft = right + 12;
     }
 
     bindInput() {
@@ -466,6 +551,7 @@ export class ExpeditionScene extends Phaser.Scene {
         await retroMusic.start();
         this.musicButton?.setText(`[ ${retroMusic.label()} ]`);
         this.sfxButton?.setText(`[ ${retroMusic.sfxLabel()} ]`);
+        this.layoutTopButtons();
     }
 
     resetRound() {
@@ -484,7 +570,6 @@ export class ExpeditionScene extends Phaser.Scene {
         this.pendingTapDistance = 0;
         retroMusic.setMotor(false);
         retroMusic.setAmbience(false);
-        this.quizOverlay?.close();
         this.upgradeOverlay?.close();
         this.layerBriefing?.close(false);
         this.cameras.main.scrollY = this.initialCameraY;
@@ -505,7 +590,9 @@ export class ExpeditionScene extends Phaser.Scene {
         this.drillHudText.setVisible(false);
         this.economyText.setVisible(false);
         this.energyGraphics.setVisible(false);
+        this.energyLabel?.setVisible(false);
         this.laneGraphics.setVisible(false);
+        this.deepTimeGraphics?.setVisible(false);
         this.boostButton.setVisible(false);
         this.secretPanel.setVisible(false);
         this.currentNotePanel.setVisible(false);
@@ -521,16 +608,180 @@ export class ExpeditionScene extends Phaser.Scene {
         this.drawPowerMeter();
     }
 
+    openIntro() {
+        this.roundState = "instructions";
+        if (!hasSeenTutorial()) {
+            this.openHowToPlay();
+            return;
+        }
+        this.startMenu.open({
+            subtitle: this.record.bestScore > 0
+                ? `BEST ${this.record.bestScore} • ${this.record.discovered}/${ROCK_LAYERS.length} LAYERS FOUND`
+                : "10 LAYERS • FIELD EXPEDITION",
+            onPlay: () => this.beginExpedition(),
+            onHowToPlay: () => this.openHowToPlay()
+        });
+    }
+
     openHowToPlay() {
         this.roundState = "instructions";
         this.howToPlay.open(() => {
-            this.roundState = "ready";
-            this.helpText.setText(
-                this.record.discovered > 0
-                    ? "AIM AT SHAFT • PULL • RELEASE"
-                    : "PULL UP • RELEASE"
-            );
-            showStatus("Expedition ready", "success");
+            markTutorialSeen();
+            this.beginExpedition();
+        });
+    }
+
+    beginExpedition() {
+        this.roundState = "ready";
+        retroMusic.setIntensity(0);
+        this.helpText.setText(
+            this.record.discovered > 0
+                ? "AIM AT SHAFT • PULL • RELEASE"
+                : "PULL UP • RELEASE"
+        );
+        showStatus("Expedition ready", "success");
+    }
+
+    // Advanced moves are taught the moment the player meets them, once ever.
+    showHintOnce(name, message) {
+        if (hasSeenHint(name)) return;
+        markHintSeen(name);
+        this.showHint(message);
+    }
+
+    // Đóng băng vài chục mili giây: cú va có sức nặng hơn mọi kiểu rung camera.
+    createDeepTimeGauge() {
+        this.deepTimeGraphics = this.add.graphics()
+            .setScrollFactor(0).setDepth(40).setVisible(false);
+        this.deepTimeLabel = "";
+    }
+
+    // Thời gian địa chất là khái niệm khó dạy nhất. Hiện nó chạy liên tục theo
+    // độ sâu thì học sinh cảm được nó, thay vì đọc một con số rời rạc.
+    drawDeepTime(layerIndex) {
+        if (!this.deepTimeGraphics?.visible) return;
+        const top = 118;
+        const bottom = Math.max(top + 90, this.viewHeight - 132);
+        const x = this.corridorLeft + 16;
+        const current = ROCK_LAYERS[layerIndex].ma;
+        const previous = ROCK_LAYERS[Math.max(0, layerIndex - 1)].ma;
+        const next = layerIndex + 1 < ROCK_LAYERS.length
+            ? ROCK_LAYERS[layerIndex + 1].ma
+            : current + (current - previous) * 0.3;
+        const layerTop = this.layerStartY + layerIndex * this.layerHeight;
+        const within = Phaser.Math.Clamp((this.drill.y - layerTop) / this.layerHeight, 0, 1);
+        const ma = current + (next - current) * within;
+        const markerY = top + (bottom - top) * ((layerIndex + within) / ROCK_LAYERS.length);
+
+        const gauge = this.deepTimeGraphics;
+        gauge.clear();
+        gauge.fillStyle(0x14232b, 0.82).fillRect(x - 5, top - 8, 18, bottom - top + 16);
+        gauge.fillStyle(0x2b4350, 1).fillRect(x, top, 8, bottom - top);
+        ROCK_LAYERS.forEach((entry, index) => {
+            const tickY = top + (bottom - top) * (index / ROCK_LAYERS.length);
+            gauge.fillStyle(index <= layerIndex ? 0xf0c66a : 0x4a5e68, 1);
+            gauge.fillRect(x - 3, tickY, 14, 3);
+        });
+        gauge.fillStyle(0x78d5c5, 1).fillRect(x - 7, markerY - 2, 22, 5);
+
+        // Con số đi vào HUD để không bao giờ đè lên câu hỏi của cổng.
+        this.deepTimeLabel = `\u2248 ${Math.round(ma).toLocaleString()} Ma`;
+    }
+
+    hitstop(duration = 70) {
+        this.hitstopUntil = Math.max(this.hitstopUntil, this.time.now + duration);
+    }
+
+    // Giật camera theo đúng hướng va chạm, thay cho rung ngẫu nhiên vô hướng.
+    cameraKick(dirX, dirY, strength = 1) {
+        this.cameraKickX = Phaser.Math.Clamp(
+            dirX * 16 * strength,
+            -WORLD_BLEED * 0.7,
+            WORLD_BLEED * 0.7
+        );
+        this.cameraKickY = Phaser.Math.Clamp(dirY * 13 * strength, -28, 28);
+    }
+
+    rumble(pattern) {
+        if (!this.allowVibration) return;
+        try {
+            navigator.vibrate(pattern);
+        } catch (error) {
+            this.allowVibration = false;
+        }
+    }
+
+    // Viền màn hình sáng dần theo chuỗi near miss, tắt dần cùng đồng hồ combo.
+    drawComboGlow(time) {
+        if (!this.comboGlow) return;
+        this.comboGlow.clear();
+        const active = this.nearMissCombo > 0 && time <= this.nearMissExpiresAt;
+        if (!active) return;
+        const remaining = Phaser.Math.Clamp((this.nearMissExpiresAt - time) / 2500, 0, 1);
+        const level = Phaser.Math.Clamp(this.nearMissCombo, 1, 4);
+        const colors = [0x66e0cf, 0x91eadc, 0xffd166, 0xff9f5a];
+        const thickness = 5 + level * 6;
+        const alpha = (0.14 + level * 0.09) * (0.35 + remaining * 0.65);
+        this.comboGlow.lineStyle(thickness, colors[level - 1], alpha);
+        this.comboGlow.strokeRect(
+            thickness / 2,
+            thickness / 2,
+            this.viewWidth - thickness,
+            this.viewHeight - thickness
+        );
+    }
+
+    // Chuyển tầng: một dải đá quét ngang màn hình theo màu của tầng mới.
+    playLayerWipe(layer) {
+        const height = Math.max(120, this.viewHeight * 0.32);
+        const band = this.add.rectangle(
+            this.viewWidth / 2,
+            -height,
+            this.viewWidth,
+            height,
+            layer.color,
+            1
+        ).setScrollFactor(0).setDepth(80);
+        const edge = this.add.rectangle(
+            this.viewWidth / 2,
+            -height,
+            this.viewWidth,
+            7,
+            layer.secondary ?? 0xf7fbff,
+            1
+        ).setScrollFactor(0).setDepth(81);
+        const travel = this.viewHeight + height;
+        [band, edge].forEach((part, index) => {
+            this.tweens.add({
+                targets: part,
+                y: part.y + travel + (index === 1 ? height / 2 : 0),
+                alpha: index === 0 ? 0.25 : 0.9,
+                duration: 430,
+                ease: "Cubic.In",
+                onComplete: () => part.destroy()
+            });
+        });
+    }
+
+    showHint(message) {
+        const centerX = (this.corridorLeft + this.corridorRight) / 2 || this.viewWidth / 2;
+        const chip = this.add.text(centerX, this.viewHeight * 0.3, message, {
+            fontFamily: GAME_FONT,
+            fontSize: this.viewWidth < 650 ? "20px" : "27px",
+            fontStyle: "bold",
+            color: UI.keywordHex,
+            backgroundColor: "#14232bf2",
+            padding: { x: 18, y: 12 }
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(96).setAlpha(0);
+        this.tweens.add({ targets: chip, alpha: 1, duration: 180, ease: "Quad.Out" });
+        this.tweens.add({
+            targets: chip,
+            alpha: 0,
+            y: chip.y - 22,
+            delay: 2300,
+            duration: 420,
+            ease: "Cubic.Out",
+            onComplete: () => chip.destroy()
         });
     }
 
@@ -610,6 +861,7 @@ export class ExpeditionScene extends Phaser.Scene {
             return;
         }
         this.roundState = "launched";
+        retroMusic.setIntensity(1);
         this.dragPointerId = null;
         this.velocity.copy(this.predictedVelocity());
         this.launchPower = Math.round(this.power * 100);
@@ -628,9 +880,17 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     update(time, delta) {
+        if (this.startMenu?.isOpen) {
+            this.startMenu.handleKeys(this.keys);
+            return;
+        }
         if (this.howToPlay?.isOpen) {
+            this.howToPlay.handleKeys(this.keys);
+            return;
+        }
+        if (this.timeGap?.isOpen) {
             if (this.keys && Phaser.Input.Keyboard.JustDown(this.keys.continue)) {
-                this.howToPlay.start();
+                this.timeGap.tryContinue();
             }
             return;
         }
@@ -656,6 +916,13 @@ export class ExpeditionScene extends Phaser.Scene {
         }
         if (this.notebook?.isOpen) return;
 
+        if (time < this.hitstopUntil) return;
+        // Cú giật ngang lắng lại cả khi đang mở câu hỏi, không để camera kẹt lệch.
+        if (this.roundState !== "drilling" && this.cameraKickX !== 0) {
+            this.cameraKickX *= 0.8;
+            if (Math.abs(this.cameraKickX) < 0.3) this.cameraKickX = 0;
+            this.cameras.main.scrollX = this.cameraKickX;
+        }
         if (["dragging", "launched", "drilling", "layerSummary"].includes(this.roundState)) {
             this.drawDrillBit(Math.floor(time / 70) % 2 === 0);
         }
@@ -810,6 +1077,7 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     setDrillingInterface() {
+        retroMusic.setIntensity(2);
         // Keep the player visible if the route passes behind the persistent field note.
         this.drill.setDepth(42);
         this.titleText.setVisible(false);
@@ -821,13 +1089,18 @@ export class ExpeditionScene extends Phaser.Scene {
         this.drillHudText.setVisible(true);
         this.economyText.setVisible(true);
         this.energyGraphics.setVisible(true);
+        this.energyLabel.setVisible(true);
         this.laneGraphics.setVisible(true);
         this.boostButton.setVisible(true);
         this.setCurrentNoteVisible(true);
         const playCenter = (this.corridorLeft + this.corridorRight) / 2;
         this.helpText.setX(playCenter);
         this.layerBanner.setX(playCenter);
-        this.helpText.setText("FIND 5 SAMPLES • DODGE ROCKS");
+        const startLayer = ROCK_LAYERS[Math.max(0, this.currentLayer)];
+        this.helpText.setText(
+            `${startLayer.name.toUpperCase()}  •  ${startLayer.rockType.toUpperCase()}`
+        );
+        this.deepTimeGraphics.setVisible(true);
         this.drawEnergyBar();
         this.drawSampleIndicator(0);
     }
@@ -898,6 +1171,10 @@ export class ExpeditionScene extends Phaser.Scene {
         const boostFactor = boosting ? 2.15 : 1;
         if (boosting && !this.wasBoosting) retroMusic.effect("boost");
         this.wasBoosting = boosting;
+        if (!this.boostHintDone && movement.lengthSq() > 0.01) {
+            this.boostHintDone = true;
+            this.showHintOnce("boost", "HOLD SPACE TO BOOST");
+        }
         this.drill.setScale(boosting ? 1.1 : 1);
         this.boostButton
             .setText(boosting ? "[ BOOST • FUEL −6%/s ]" : "[ BOOST • SPACE ]")
@@ -935,7 +1212,9 @@ export class ExpeditionScene extends Phaser.Scene {
         this.drill.setPosition(mazeResult.x, mazeResult.y);
         if (mazeResult.hit && time >= (this.mazeBumpUntil || 0)) {
             this.mazeBumpUntil = time + 360;
-            this.cameras.main.shake(80, 0.003);
+            this.hitstop(45);
+            this.cameraKick(Math.sign(this.drill.x - beforeX) || 0, Math.sign(this.drill.y - beforeY) || 0, 0.5);
+            this.rumble(18);
             this.helpText.setText("GATE • FIND THE GAP");
             this.alertUntil = time + 700;
         }
@@ -965,9 +1244,12 @@ export class ExpeditionScene extends Phaser.Scene {
             this.helpText.setText("HOT ROCK • −15% FUEL");
             this.alertUntil = time + 1350;
         }
-        // Movement stays quiet so collectible, quiz, impact, and transition cues remain clear.
+        // Tiếng máy khoan chạy liên tục gây nhức đầu và lấn tiếng mẫu vật, va
+        // chạm, chuyển tầng — để im.
         retroMusic.setMotor(false);
         retroMusic.setAmbience(true, layerIndex / Math.max(1, ROCK_LAYERS.length - 1));
+        // Sắp cạn nhiên liệu thì nhạc nhanh lên và dày hat — hồi hộp mà không cần chữ.
+        retroMusic.setIntensity(this.energy / this.energyMax < 0.25 ? 3 : 2);
 
         const magnetRadius = 33 + this.upgrades.magnet * 20;
         const sample = this.evidenceCourse.findSampleCollision(
@@ -995,34 +1277,66 @@ export class ExpeditionScene extends Phaser.Scene {
         }
 
         if (time > this.alertUntil && this.roundState === "drilling") {
+            // Dòng trạng thái mặc định gọi đúng tên hệ tầng đang khoan.
             this.helpText.setText(
                 environment.label
-                    ? `${environment.label} • FIND 5`
-                    : `${challenge.name} • FIND 5`
+                    ? `${environment.label}  •  ${layer.name.toUpperCase()}`
+                    : `${layer.name.toUpperCase()}  •  ${layer.rockType.toUpperCase()}`
             );
         }
 
         if (travelDistance > 0.5) this.spawnDrillParticles(time, layer);
         if (boosting) this.spawnBoostTrail(time, layer);
+        this.cameraKickX *= 0.82;
+        this.cameraKickY *= 0.82;
+        if (Math.abs(this.cameraKickX) < 0.3) this.cameraKickX = 0;
+        if (Math.abs(this.cameraKickY) < 0.3) this.cameraKickY = 0;
+        // Camera nhìn trước một chút về phía đang lái, mạnh hơn khi tăng tốc.
+        const leadTarget = movement.y * this.viewHeight * (boosting ? 0.062 : 0.036);
+        this.cameraLeadY = Phaser.Math.Linear(this.cameraLeadY, leadTarget, 0.08);
         const desiredScroll = Phaser.Math.Clamp(
-            this.layerStartY + (layerIndex + 0.5) * this.layerHeight - this.viewHeight * 0.52,
+            this.layerStartY + (layerIndex + 0.5) * this.layerHeight -
+                this.viewHeight * 0.52 + this.cameraLeadY,
             0,
             this.worldHeight - this.viewHeight
         );
-        this.cameras.main.scrollY = Phaser.Math.Linear(this.cameras.main.scrollY, desiredScroll, 0.14);
-        const evidenceLabel = `SAMPLES ${this.layerSamples[layerIndex].size}/5`;
-        const energyPercent = Math.round(Phaser.Math.Clamp(this.energy / this.energyMax, 0, 1) * 100);
-        this.drillHudText.setText(this.viewWidth < 650
-            ? `RUN ${formatRunTime(this.activeElapsedMs)}  •  LAYER ${formatRunTime(this.layerElapsedMs)}\n` +
-                `SAMPLES ${this.layerSamples[layerIndex].size}/5  •  FUEL ${energyPercent}%  •  HITS ${this.collisions}`
-            : `RUN ${formatRunTime(this.activeElapsedMs)}  •  LAYER ${formatRunTime(this.layerElapsedMs)}  •  ` +
-                `${String(layerIndex + 1).padStart(2, "0")}/${ROCK_LAYERS.length} ${layer.name}\n` +
-                `${evidenceLabel}  •  FUEL ${energyPercent}%  •  HITS ${this.collisions}`
+        const settled = Phaser.Math.Linear(
+            this.cameras.main.scrollY - this.appliedKickY,
+            desiredScroll,
+            0.14
         );
-        const comboLabel = this.nearMissCombo > 0 && time <= this.nearMissExpiresAt
-            ? `\nNEAR MISS x${this.nearMissCombo}`
-            : "";
-        this.economyText.setText(`SCORE ${this.score}\nCREDITS ${this.credits}${comboLabel}`);
+        this.appliedKickY = this.cameraKickY;
+        this.cameras.main.scrollY = settled + this.cameraKickY;
+        this.cameras.main.scrollX = this.cameraKickX;
+        this.drawComboGlow(time);
+        this.drawDeepTime(layerIndex);
+        const energyPercent = Math.round(Phaser.Math.Clamp(this.energy / this.energyMax, 0, 1) * 100);
+        // Một khối duy nhất bên trái. Trước đây điểm số là một text riêng
+        // căn phải, nó đâm thẳng vào hàng nút ở góc phải.
+        const compactHud = this.viewWidth < 650;
+        // Số mẫu đã có ô ở dưới, nhiên liệu đã có thanh riêng, số lần va nằm ở
+        // màn kết — bảng này chỉ giữ thứ không hiện ở đâu khác.
+        this.drillHudText.setText(compactHud
+            ? `RUN ${formatRunTime(this.activeElapsedMs)}\n` +
+                `${this.score} PTS  •  ${this.credits} CR\n` +
+                `${String(layerIndex + 1).padStart(2, "0")}/${ROCK_LAYERS.length}  •  ${this.deepTimeLabel}`
+            : `RUN ${formatRunTime(this.activeElapsedMs)}  •  LAYER ${formatRunTime(this.layerElapsedMs)}\n` +
+                `SCORE ${this.score}  •  CREDITS ${this.credits}\n` +
+                `${String(layerIndex + 1).padStart(2, "0")}/${ROCK_LAYERS.length} ${layer.name}  •  ${this.deepTimeLabel}`
+        );
+        // Chữ HUD phải tránh cả hàng nút lẫn thanh nhiên liệu ở góc phải.
+        const hudLimit = Math.min(
+            this.topButtonsLeft || this.viewWidth - 150,
+            compactHud ? this.viewWidth : (this.energyBarLeft || this.viewWidth)
+        ) - 22;
+        this.fitTextWidth(this.drillHudText, hudLimit, 13);
+        this.drillHudShade
+            .setSize(Math.min(this.viewWidth, this.drillHudText.width + 34), this.drillHudText.height + 24);
+        this.economyText.setPosition(16, this.drillHudText.height + 22);
+        const comboActive = this.nearMissCombo > 0 && time <= this.nearMissExpiresAt;
+        this.economyText
+            .setText(comboActive ? `NEAR MISS x${this.nearMissCombo}` : "")
+            .setVisible(comboActive);
         this.drawEnergyBar();
         this.drawSampleIndicator(layerIndex);
 
@@ -1038,11 +1352,14 @@ export class ExpeditionScene extends Phaser.Scene {
         }
     }
 
+    // Va đá mở bảng câu hỏi như bản gốc, nhưng cú va được giữ lại sức nặng:
+    // khựng hình trước, bảng hỏi mở sau khi cảm giác va đã đọng lại.
     handleObstacleCollision(obstacle, layer, time) {
         if (this.roundState !== "drilling") return;
         this.roundState = "quiz";
         this.collisionCooldownUntil = time + 1200;
         this.collisions += 1;
+        this.layerHits += 1;
         this.nearMissCombo = 0;
         this.nearMissExpiresAt = 0;
         this.touchBoostHeld = false;
@@ -1050,21 +1367,55 @@ export class ExpeditionScene extends Phaser.Scene {
         this.wasBoosting = false;
         this.drill.setScale(1);
         this.boostButton.setVisible(false);
+        this.comboGlow?.clear();
         retroMusic.effect("bump");
         retroMusic.setMotor(false);
         retroMusic.setAmbience(false);
-        this.cameras.main.shake(170, 0.01);
+        this.cameras.main.shake(150, 0.006);
         const knockDirection = this.drill.x <= obstacle.x ? -1 : 1;
+        this.hitstop(70);
+        this.cameraKick(knockDirection, 0.55, 1);
+        this.rumble([26, 40, 18]);
         this.drill.x = Phaser.Math.Clamp(
-            this.drill.x + knockDirection * 28,
+            this.drill.x + knockDirection * 30,
             this.corridorLeft,
             this.corridorRight
         );
-        this.drill.y -= 7;
+        this.drill.y -= 8;
         this.helpText.setText("ROCK QUIZ • NOTE HIDDEN");
         this.setCurrentNoteVisible(false);
+        retroMusic.setReading(true);
         const quiz = getLayerQuiz(layer, obstacle.quizIndex);
-        this.quizOverlay.open(quiz, (correct) => this.resolveRockQuiz(obstacle, layer, correct));
+        this.time.delayedCall(140, () => {
+            if (this.roundState !== "quiz") return;
+            this.quizOverlay.open(quiz, (correct) => this.resolveRockQuiz(obstacle, layer, correct));
+        });
+    }
+
+    resolveRockQuiz(obstacle, layer, correct) {
+        retroMusic.setReading(false);
+        this.evidenceCourse.resolveObstacle(obstacle, correct);
+        if (correct) {
+            this.correctAnswers += 1;
+            this.score += 50;
+            retroMusic.effect("correct");
+            this.cameras.main.flash(90, 105, 230, 200, false);
+            this.showScreenPopup("CORRECT  +50", "#91eadc");
+            this.helpText.setText("CORRECT +50 • ROCK CLEARED");
+        } else {
+            this.wrongAnswers += 1;
+            this.score = Math.max(0, this.score - 100);
+            this.slowUntil = this.time.now + 2000;
+            this.energy -= this.energyMax * 0.07;
+            retroMusic.effect("wrong");
+            this.rumble([30, 50, 30]);
+            this.showScreenPopup("WRONG  −100 • SLOW 2s", "#ff9f85");
+            this.helpText.setText("−100 • SLOW 2s • CHECK NOTE");
+        }
+        this.setCurrentNoteVisible(true);
+        this.roundState = "drilling";
+        this.boostButton.setVisible(true);
+        this.alertUntil = this.time.now + 1500;
     }
 
     registerNearMiss(obstacle, time) {
@@ -1076,10 +1427,12 @@ export class ExpeditionScene extends Phaser.Scene {
         this.bestNearMissCombo = Math.max(this.bestNearMissCombo, this.nearMissCombo);
         const scoreGain = 50 * this.nearMissCombo;
         this.score += scoreGain;
-        retroMusic.effect("nearMiss");
+        retroMusic.effect("nearMiss", { combo: this.nearMissCombo });
         this.cameras.main.shake(70, 0.0016);
         this.cameras.main.flash(45, 143, 242, 220, false);
+        this.rumble(12);
         const comboText = this.nearMissCombo > 1 ? ` x${this.nearMissCombo}` : "";
+        this.showHintOnce("nearMiss", "CLOSE PASS — NEAR MISS!");
         this.showScreenPopup(`NEAR MISS${comboText}  +${scoreGain}`, "#91eadc");
         this.helpText.setText(
             this.nearMissCombo > 1
@@ -1089,31 +1442,42 @@ export class ExpeditionScene extends Phaser.Scene {
         this.alertUntil = time + 900;
     }
 
-    resolveRockQuiz(obstacle, layer, correct) {
-        this.evidenceCourse.resolveObstacle(obstacle, correct);
-        if (correct) {
-            this.correctAnswers += 1;
-            this.score += 50;
-            retroMusic.effect("correct");
-            this.showScreenPopup("CORRECT  +50", "#91eadc");
-            this.helpText.setText("CORRECT +50 • ROCK CLEARED");
-        } else {
-            this.wrongAnswers += 1;
-            this.score -= 100;
-            this.slowUntil = this.time.now + 2000;
-            retroMusic.effect("wrong");
-            this.showScreenPopup("WRONG  −100 • SLOW 2s", "#ff9f85");
-            this.helpText.setText("−100 • SLOW 2s • CHECK NOTE");
+    // Ghi chú dài ngắn khác nhau; thu chữ lại cho vừa panel thay vì để tràn đáy.
+    fitTextHeight(text, maxHeight, minSize = 13) {
+        if (!text || maxHeight <= 0) return;
+        const original = text.getData("baseFontSize") ||
+            Number.parseFloat(text.style.fontSize) || 18;
+        text.setData("baseFontSize", original);
+        let size = original;
+        text.setFontSize(size);
+        while (text.height > maxHeight && size > minSize) {
+            size -= 1;
+            text.setFontSize(size);
         }
-        this.setCurrentNoteVisible(true);
-        this.roundState = "drilling";
-        this.boostButton.setVisible(true);
-        this.alertUntil = this.time.now + 1500;
+    }
+
+    // Tên tầng dài ngắn khác nhau; thu chữ lại thay vì để nó đâm vào hàng nút.
+    fitTextWidth(text, maxWidth, minSize = 13) {
+        if (!text || maxWidth <= 0) return;
+        const original = text.getData("baseFontSize") ||
+            Number.parseFloat(text.style.fontSize) || 19;
+        text.setData("baseFontSize", original);
+        let size = original;
+        text.setFontSize(size);
+        while (text.width > maxWidth && size > minSize) {
+            size -= 1;
+            text.setFontSize(size);
+        }
     }
 
     showScreenPopup(message, color) {
         const centerX = (this.corridorLeft + this.corridorRight) / 2;
-        const popup = this.add.text(centerX, this.viewHeight * 0.44, message, {
+        // Xếp hàng theo chiều dọc: hai thông báo liền nhau không đè lên nhau.
+        const now = this.time.now;
+        if (now - (this.lastPopupAt || 0) > 900) this.popupSlot = 0;
+        else this.popupSlot = ((this.popupSlot || 0) + 1) % 3;
+        this.lastPopupAt = now;
+        const popup = this.add.text(centerX, this.viewHeight * 0.44 + this.popupSlot * 42, message, {
             fontFamily: GAME_FONT,
             fontSize: this.viewWidth < 650 ? "20px" : "28px",
             fontStyle: "bold",
@@ -1140,6 +1504,7 @@ export class ExpeditionScene extends Phaser.Scene {
             return;
         }
         collected.add(sample.clueIndex);
+        markSampleFound(sample.layerIndex, sample.clueIndex);
         this.score += 100;
         const creditGain = Math.round(50 * (1 + this.upgrades.earnings * 0.25));
         this.credits += creditGain;
@@ -1205,10 +1570,22 @@ export class ExpeditionScene extends Phaser.Scene {
         this.alertUntil = time + 1250;
     }
 
+    // Ba sao: xong tầng · không va đá · dưới mốc thời gian.
+    // Sao một ai cũng lấy được; sao ba phải thật sự hiểu tầng đó.
+    scoreLayerStars(index) {
+        let stars = 1;
+        if (this.layerHits === 0) stars += 1;
+        if (this.layerElapsedMs <= this.layerStarTargetMs) stars += 1;
+        recordLayerStars(index, stars);
+        return stars;
+    }
+
     completeLayer(index) {
         if (this.completedLayers.has(index)) return;
         this.completedLayers.add(index);
         const layer = ROCK_LAYERS[index];
+        const stars = this.scoreLayerStars(index);
+        const starLine = `${"\u2605".repeat(stars)}${"\u2606".repeat(3 - stars)}`;
         this.touchBoostHeld = false;
         this.boostPointerId = null;
         this.wasBoosting = false;
@@ -1233,7 +1610,7 @@ export class ExpeditionScene extends Phaser.Scene {
                 .map((clue) => `• ${clue.type}: ${clue.text}`)
                 .join("\n");
             this.secretPanel
-                .setText(`FINAL CORE COMPLETE\n${layer.name} • ${layer.ma} Ma\n\n${lines}`)
+                .setText(`FINAL CORE COMPLETE  ${starLine}\n${layer.name} • ${layer.ma} Ma\n\n${lines}`)
                 .setVisible(true)
                 .setAlpha(0)
                 .setScale(0.94);
@@ -1256,14 +1633,14 @@ export class ExpeditionScene extends Phaser.Scene {
         }
 
         this.roundState = "upgrade";
-        this.openUpgradeShop(index, layer);
+        this.openUpgradeShop(index, layer, stars);
     }
 
     upgradeCost(type) {
         return 200;
     }
 
-    openUpgradeShop(index, layer) {
+    openUpgradeShop(index, layer, stars = 1) {
         const choices = ["speed", "magnet", "earnings"].map((type) => {
             const cost = this.upgradeCost(type);
             return {
@@ -1275,6 +1652,10 @@ export class ExpeditionScene extends Phaser.Scene {
         });
         this.upgradeOverlay.open({
             layer,
+            stars,
+            noHits: this.layerHits === 0,
+            underTime: this.layerElapsedMs <= this.layerStarTargetMs,
+            targetSeconds: Math.round(this.layerStarTargetMs / 1000),
             credits: this.credits,
             upgrades: this.upgrades,
             choices
@@ -1314,15 +1695,20 @@ export class ExpeditionScene extends Phaser.Scene {
         if (index < 0 || index >= ROCK_LAYERS.length || index === this.currentLayer) return;
         this.currentLayer = index;
         this.layerElapsedMs = 0;
+        this.layerHits = 0;
+        // Thang âm, cao độ gốc và mật độ nốt của nhạc đổi theo tầng đá.
+        retroMusic.setLayer(index);
+        retroMusic.resetCollectLadder();
         const layer = ROCK_LAYERS[index];
         const challenge = getLayerChallenge(index);
         const isNew = index >= this.previousBest;
         const alreadyBriefed = this.briefedLayers.has(index);
+        this.playLayerWipe(layer);
         this.renderCurrentLayerNote(index);
 
         this.layerBanner.setText(
             `${isNew ? "NEW" : "RESURVEY"} ${String(index + 1).padStart(2, "0")}/${ROCK_LAYERS.length} • ${layer.name} • ${layer.ma} Ma\n` +
-            `${challenge.name} • FIND 5`
+            `${challenge.name} • ${layer.rockType}`
         );
         this.tweens.killTweensOf(this.layerBanner);
         if (this.viewWidth < 650 || !alreadyBriefed) {
@@ -1339,26 +1725,50 @@ export class ExpeditionScene extends Phaser.Scene {
             });
         }
 
+        // Mặt bất chỉnh hợp phải được cảm thấy trước khi tầng mới tự giới thiệu.
+        const gap = timeGapFor(index, ROCK_LAYERS);
+        if (gap && !this.shownTimeGaps.has(index)) {
+            this.shownTimeGaps.add(index);
+            const previousState = this.roundState;
+            this.roundState = "timeGap";
+            this.boostButton.setVisible(false);
+            retroMusic.setMotor(false);
+            retroMusic.setAmbience(false);
+            this.timeGap.open(gap, () => {
+                this.roundState = previousState === "briefing" ? previousState : "drilling";
+                this.boostButton.setVisible(true);
+                this.openLayerBriefing(index, layer, challenge, isNew, alreadyBriefed);
+            });
+            return;
+        }
+        this.openLayerBriefing(index, layer, challenge, isNew, alreadyBriefed);
+    }
+
+    openLayerBriefing(index, layer, challenge, isNew, alreadyBriefed) {
         if (!alreadyBriefed) {
             this.briefedLayers.add(index);
             this.roundState = "briefing";
             this.boostButton.setVisible(false);
             retroMusic.setMotor(false);
             retroMusic.setAmbience(false);
+            retroMusic.setReading(true);
             this.layerBriefing.open({
                 layer,
                 index,
                 total: ROCK_LAYERS.length,
                 challenge,
-                isNew
+                isNew,
+                story: storyFor(index)
             }, () => {
                 if (this.roundState !== "briefing") return;
                 this.roundState = "drilling";
+                retroMusic.setReading(false);
+                retroMusic.setIntensity(2);
                 this.boostButton.setVisible(true);
                 this.layerEntryGraceUntil = this.time.now + 1500;
                 this.collisionCooldownUntil = Math.max(this.collisionCooldownUntil, this.layerEntryGraceUntil);
                 retroMusic.effect("layer");
-                this.helpText.setText(`${challenge.name} • FIND 5`);
+                this.helpText.setText(`${layer.name.toUpperCase()}  •  ${layer.rockType.toUpperCase()}`);
                 this.alertUntil = this.time.now + 1500;
             });
         }
@@ -1389,9 +1799,13 @@ export class ExpeditionScene extends Phaser.Scene {
         this.currentNoteHint.setText(
             `${collected.size}/5 • +100 SCORE + CREDITS EACH`
         );
+        // Ghi chú của mỗi tầng dài ngắn khác nhau — thu cho vừa panel.
+        const bodyRoom = this.currentNoteHint.y - this.currentNoteBody.y - 12;
+        this.fitTextHeight(this.currentNoteBody, bodyRoom, 13);
     }
 
     setCurrentNoteVisible(visible) {
+        if (!this.usesSideNote) visible = false;
         [
             this.currentNotePanel,
             this.currentNoteTitle,
@@ -1400,28 +1814,58 @@ export class ExpeditionScene extends Phaser.Scene {
         ].forEach((item) => item?.setVisible(visible));
     }
 
+    // Đá mềm thì bụi mù, đá cứng thì bắn tia lửa. Người chơi nhìn ra độ cứng
+    // của tầng mà không cần đọc con số nào.
     spawnDrillParticles(time, layer) {
-        if (time - this.lastDrillParticleAt < 72) return;
+        const hard = layer.resistance >= 18;
+        if (time - this.lastDrillParticleAt < (hard ? 58 : 80)) return;
         this.lastDrillParticleAt = time;
         const angle = Phaser.Math.DegToRad(this.drill.angle);
         const tipX = this.drill.x + Math.sin(angle) * 39;
         const tipY = this.drill.y + Math.cos(angle) * 39;
-        for (let index = 0; index < 3; index += 1) {
-            const chip = this.add.rectangle(
-                tipX + Phaser.Math.Between(-8, 8),
-                tipY + Phaser.Math.Between(-8, 8),
-                Phaser.Math.Between(3, 7),
-                Phaser.Math.Between(3, 7),
-                index === 0 ? 0xffe890 : layer.color
+
+        if (hard) {
+            for (let index = 0; index < 5; index += 1) {
+                const spark = this.add.rectangle(
+                    tipX + Phaser.Math.Between(-5, 5),
+                    tipY + Phaser.Math.Between(-5, 5),
+                    Phaser.Math.Between(2, 4),
+                    Phaser.Math.Between(2, 9),
+                    index % 2 === 0 ? 0xfff3c4 : 0xffd166
+                ).setDepth(9);
+                this.tweens.add({
+                    targets: spark,
+                    x: spark.x + Phaser.Math.Between(-90, 90),
+                    y: spark.y + Phaser.Math.Between(-34, 60),
+                    angle: Phaser.Math.Between(-220, 220),
+                    alpha: 0,
+                    duration: Phaser.Math.Between(150, 260),
+                    ease: "Quad.Out",
+                    onComplete: () => spark.destroy()
+                });
+            }
+            return;
+        }
+
+        for (let index = 0; index < 4; index += 1) {
+            const puff = this.add.rectangle(
+                tipX + Phaser.Math.Between(-13, 13),
+                tipY + Phaser.Math.Between(-10, 10),
+                Phaser.Math.Between(9, 20),
+                Phaser.Math.Between(7, 15),
+                index === 0 ? (layer.secondary ?? layer.color) : layer.color,
+                0.55
             ).setDepth(9);
             this.tweens.add({
-                targets: chip,
-                x: chip.x + Phaser.Math.Between(-48, 48),
-                y: chip.y + Phaser.Math.Between(-5, 42),
-                angle: Phaser.Math.Between(-160, 160),
+                targets: puff,
+                x: puff.x + Phaser.Math.Between(-46, 46),
+                y: puff.y + Phaser.Math.Between(-28, 34),
+                scaleX: 1.7,
+                scaleY: 1.7,
                 alpha: 0,
-                duration: Phaser.Math.Between(240, 420),
-                onComplete: () => chip.destroy()
+                duration: Phaser.Math.Between(360, 620),
+                ease: "Sine.Out",
+                onComplete: () => puff.destroy()
             });
         }
     }
@@ -1448,23 +1892,43 @@ export class ExpeditionScene extends Phaser.Scene {
         });
     }
 
+    // Dải trên cùng chỉ còn chữ HUD và hàng nút. Nhiên liệu xuống hàng dưới,
+    // nằm cạnh ô mẫu vật — hai thứ người chơi liếc nhiều nhất, cùng một chỗ.
+    hudBottomRowY() {
+        return this.viewHeight - 118;
+    }
+
     drawEnergyBar() {
         if (!this.energyGraphics.visible || !this.energyMax) return;
-        const width = Math.min(270, (this.playAreaRight || this.viewWidth) * 0.36);
-        const x = (this.playAreaRight || this.viewWidth) - width - 8;
-        const y = 52;
+        const right = this.playAreaRight || this.viewWidth;
+        const narrow = this.viewWidth < 650;
+        const width = Math.min(narrow ? 300 : 270, (right - this.corridorLeft) * 0.46);
+        // Màn rộng: nhiên liệu về góc trên phải như cũ. Màn hẹp: giữ ở hàng dưới,
+        // vì góc trên phải là chỗ của cột nút.
+        const x = narrow ? this.corridorLeft + 4 : right - width - 8;
+        const y = narrow ? this.hudBottomRowY() : 52;
         const ratio = Phaser.Math.Clamp(this.energy / this.energyMax, 0, 1);
         const color = ratio > 0.55 ? 0x66e0cf : ratio > 0.25 ? 0xffa044 : 0xff5d43;
-        this.energyGraphics.clear().fillStyle(0x0e0a10, 1).fillRect(x, y, width, 20);
+        this.energyGraphics.clear().fillStyle(0x101923, 0.92).fillRect(x - 4, y - 6, width + 8, 32);
+        this.energyGraphics.fillStyle(0x0e0a10, 1).fillRect(x, y, width, 20);
         this.energyGraphics.fillStyle(0xf7fbff, 1).fillRect(x + 3, y + 3, width - 6, 14);
         this.energyGraphics.fillStyle(color, 1).fillRect(x + 3, y + 3, (width - 6) * ratio, 14);
+        this.energyBarLeft = x;
+        // Màn rộng: nhãn nằm dưới thanh, tránh hàng nút. Màn hẹp: nằm trên,
+        // tránh ô mẫu vật ở hàng dưới.
+        this.energyLabel
+            .setOrigin(1, narrow ? 1 : 0)
+            .setPosition(x + width, narrow ? y - 5 : y + 25)
+            .setText(`FUEL ${Math.round(ratio * 100)}%`)
+            .setColor(ratio > 0.25 ? "#cdd5d0" : "#ff9f85");
     }
 
     drawSampleIndicator(layerIndex) {
         if (!this.laneGraphics.visible) return;
-        const y = this.viewHeight - 76;
-        const center = (this.corridorLeft + this.corridorRight) / 2;
+        const y = this.hudBottomRowY() + 10;
         const gap = 34;
+        const right = this.playAreaRight || this.viewWidth;
+        const center = right - 12 - gap * 2 - 10;
         const collected = this.layerSamples[layerIndex] || new Set();
         const colors = [0xf6e27a, 0xffa044, 0xf28dc8, 0x66e0cf, 0xffd166];
         this.laneGraphics.clear();
@@ -1551,10 +2015,12 @@ export class ExpeditionScene extends Phaser.Scene {
     cleanupScene() {
         retroMusic.setMotor(false);
         retroMusic.setAmbience(false);
-        this.quizOverlay?.close();
         this.upgradeOverlay?.close();
         this.layerBriefing?.close(false);
+        this.quizOverlay?.close();
+        this.timeGap?.close(false);
         this.howToPlay?.close(false);
+        this.startMenu?.close();
         this.scale.off("resize", this.handleResize, this);
         this.input.removeAllListeners();
     }

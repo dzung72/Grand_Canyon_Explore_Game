@@ -1,5 +1,5 @@
-import { installGlobalErrorHandlers, showStatus } from "./core/status.js";
-import { loadDatabase } from "./services/storage.js?v=4.4.0";
+import { installGlobalErrorHandlers, showStatus } from "./core/status.js?v=5.1.2";
+import { loadDatabase } from "./services/storage.js?v=5.1.2";
 
 installGlobalErrorHandlers();
 
@@ -16,8 +16,8 @@ async function startGame() {
     }
 
     const [{ ExpeditionScene }, { ResultsScene }] = await Promise.all([
-        import("./scenes/ExpeditionScene.js?v=4.6.4"),
-        import("./scenes/ResultsScene.js?v=4.6.4")
+        import("./scenes/ExpeditionScene.js?v=5.1.2"),
+        import("./scenes/ResultsScene.js?v=5.1.2")
     ]);
 
     loadDatabase();

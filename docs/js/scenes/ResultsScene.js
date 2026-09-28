@@ -1,4 +1,4 @@
-import { ROCK_LAYERS } from "../data/layers.js?v=4.6.3";
+import { ROCK_LAYERS } from "../data/layers.js?v=5.1.2";
 import {
     database,
     storageAvailable,
@@ -7,12 +7,14 @@ import {
     currentRecord,
     formatRunTime,
     leaderboard,
-    saveDatabase
-} from "../services/storage.js?v=4.4.0";
-import { pixelButton } from "../ui/components.js?v=4.6.4";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.4";
-import { retroMusic } from "../services/AudioManager.js?v=4.6.1";
-import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+    saveDatabase,
+    totalStars,
+    collectionCount
+} from "../services/storage.js?v=5.1.2";
+import { pixelButton } from "../ui/components.js?v=5.1.2";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=5.1.2";
+import { retroMusic } from "../services/AudioManager.js?v=5.1.2";
+import { GAME_FONT } from "../core/theme.js?v=5.1.2";
 
 const Phaser = window.Phaser;
 
@@ -103,8 +105,9 @@ export class ResultsScene extends Phaser.Scene {
             `SCORE           ${this.runData.score || 0}  •  BEST ${this.record.bestScore || 0}`,
             `TIME            ${formatRunTime(this.runData.elapsedMs)}  •  BEST ${this.record.bestTimeMs ? formatRunTime(this.record.bestTimeMs) : "--:--.-"}`,
             `LAYERS          ${this.record.discovered}/${ROCK_LAYERS.length}`,
-            `SAMPLES         ${this.runData.samplesCollected || 0}`,
-            `QUIZ            ${this.runData.correctAnswers || 0} right  •  ${this.runData.wrongAnswers || 0} wrong`,
+            `SAMPLES         ${this.runData.samplesCollected || 0}  •  COLLECTION ${collectionCount()}/${ROCK_LAYERS.length * 5}`,
+            `STARS           ${totalStars()}/${ROCK_LAYERS.length * 3}`,
+            `GATES           ${this.runData.correctAnswers || 0} right  •  ${this.runData.wrongAnswers || 0} wrong`,
             `NEAR MISS       ${this.runData.nearMisses || 0}  •  BEST x${this.runData.bestNearMissCombo || 0}`,
             `UPGRADES        SPD ${this.runData.upgrades?.speed || 0}  MAG ${this.runData.upgrades?.magnet || 0}  PAY ${this.runData.upgrades?.earnings || 0}`,
             `DEEPEST LAYER   ${deepest}`
