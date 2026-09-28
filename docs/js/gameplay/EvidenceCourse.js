@@ -1,5 +1,6 @@
 import { ROCK_LAYERS, getLayerEvidence } from "../data/layers.js?v=4.4.0";
 import { getLayerChallenge } from "./layerChallenges.js?v=4.4.6";
+import { GAME_FONT } from "../core/theme.js?v=4.6.1";
 
 const Phaser = window.Phaser;
 
@@ -7,7 +8,7 @@ const SAMPLE_STYLES = {
     AGE: { color: 0xf6e27a, letter: "A" },
     ROCK: { color: 0xffa044, letter: "R" },
     FIELD: { color: 0xf28dc8, letter: "F" },
-    ENV: { color: 0x45d6c4, letter: "E" },
+    ENV: { color: 0x66e0cf, letter: "E" },
     LIFE: { color: 0xffd166, letter: "L" },
     EVENT: { color: 0xc69cff, letter: "!" }
 };
@@ -136,7 +137,7 @@ export class EvidenceCourse {
 
         if (challenge.environment === "caveDrop") {
             const bounds = addZone("caveDrop", 0.34, 0.3, 0.34, 0.4);
-            zoneGraphic.fillStyle(0x09070b, 0.78).fillEllipse(
+            zoneGraphic.fillStyle(0x071018, 0.78).fillEllipse(
                 bounds.centerX,
                 bounds.centerY,
                 bounds.width,
@@ -180,7 +181,7 @@ export class EvidenceCourse {
                 addZone("resistance", 0.38, 0.39, 0.2, 0.15, 1, { id: `hot-${layerIndex}-1` }),
                 addZone("resistance", 0.73, 0.61, 0.18, 0.14, 1, { id: `hot-${layerIndex}-2` })
             ].forEach((bounds) => {
-                zoneGraphic.fillStyle(0x17121b, 0.38).fillRectShape(bounds);
+                zoneGraphic.fillStyle(0x101923, 0.38).fillRectShape(bounds);
                 zoneGraphic.lineStyle(3, 0xffa044, 0.62).strokeRectShape(bounds);
                 for (let offset = -bounds.height; offset < bounds.width; offset += 26) {
                     zoneGraphic.lineBetween(
@@ -204,7 +205,7 @@ export class EvidenceCourse {
             ];
             channels.forEach(({ bounds, direction }) => {
                 zoneGraphic.fillStyle(channelColor, 0.2).fillRectShape(bounds);
-                zoneGraphic.lineStyle(4, 0x8ff2dc, 0.7).strokeRectShape(bounds);
+                zoneGraphic.lineStyle(4, 0x91eadc, 0.7).strokeRectShape(bounds);
                 for (let column = 0; column < 5; column += 1) {
                     const arrowX = bounds.x + 28 + column * Math.max(26, (bounds.width - 56) / 4);
                     const arrowY = bounds.centerY;
@@ -230,18 +231,18 @@ export class EvidenceCourse {
             );
             this.environmentZones.push(eddy);
             zoneGraphic.fillStyle(0x69b7d6, 0.18).fillCircle(eddy.centerX, eddy.centerY, eddy.radius);
-            zoneGraphic.lineStyle(4, 0x8ff2dc, 0.78).strokeCircle(eddy.centerX, eddy.centerY, eddy.radius);
+            zoneGraphic.lineStyle(4, 0x91eadc, 0.78).strokeCircle(eddy.centerX, eddy.centerY, eddy.radius);
             zoneGraphic.beginPath();
             zoneGraphic.arc(eddy.centerX, eddy.centerY, eddy.radius * 0.58, 0.25, Math.PI * 1.72, false);
             zoneGraphic.strokePath();
-            this.addEnvironmentLabel("BRAIDED CHANNELS + EDDY", top + this.layerHeight * 0.59, 0x8ff2dc);
+            this.addEnvironmentLabel("BRAIDED CHANNELS + EDDY", top + this.layerHeight * 0.59, 0x91eadc);
             return;
         }
 
         if (["current", "pulse"].includes(challenge.environment)) {
             const type = challenge.environment;
             const bounds = addZone(type, 0.04, 0.28, 0.92, 0.42, layerIndex % 2 === 0 ? 1 : -1);
-            const color = type === "pulse" ? 0x8ff2dc : 0x69b7d6;
+            const color = type === "pulse" ? 0x91eadc : 0x69b7d6;
             zoneGraphic.fillStyle(color, 0.11).fillRectShape(bounds);
             zoneGraphic.lineStyle(3, color, 0.55).strokeRectShape(bounds);
             for (let row = 0; row < 3; row += 1) {
@@ -290,20 +291,20 @@ export class EvidenceCourse {
         if (challenge.environment === "gauntlet") {
             const resistance = addZone("resistance", 0.35, 0.38, 0.3, 0.25);
             const current = addZone("current", 0.04, 0.68, 0.92, 0.18, -1);
-            zoneGraphic.fillStyle(0x17121b, 0.42).fillRectShape(resistance);
+            zoneGraphic.fillStyle(0x101923, 0.42).fillRectShape(resistance);
             zoneGraphic.lineStyle(3, 0xe7d2bd, 0.65).strokeRectShape(resistance);
-            zoneGraphic.fillStyle(0x8ff2dc, 0.1).fillRectShape(current);
-            zoneGraphic.lineStyle(3, 0x8ff2dc, 0.52).strokeRectShape(current);
+            zoneGraphic.fillStyle(0x91eadc, 0.1).fillRectShape(current);
+            zoneGraphic.lineStyle(3, 0x91eadc, 0.52).strokeRectShape(current);
             this.addEnvironmentLabel("FOLIATION PRESSURE", top + this.layerHeight * 0.33, 0xe7d2bd);
         }
     }
 
     addEnvironmentLabel(text, y, color) {
         this.scene.add.text((this.arenaLeft + this.arenaRight) / 2, y, text, {
-            fontFamily: "Arial, Helvetica, sans-serif",
-            fontSize: "12px",
+            fontFamily: GAME_FONT,
+            fontSize: "14px",
             fontStyle: "bold",
-            color: "#17121b",
+            color: "#101923",
             backgroundColor: Phaser.Display.Color.IntegerToColor(color).rgba,
             padding: { x: 7, y: 3 }
         }).setOrigin(0.5).setDepth(5);
@@ -331,11 +332,11 @@ export class EvidenceCourse {
             foldedFoliation: "GRANITE VEIN"
         };
         this.scene.add.text(x(0.06), y(0.91), landmarkNames[layer.texture] || "FIELD CLUE", {
-            fontFamily: "Arial, Helvetica, sans-serif",
-            fontSize: "13px",
+            fontFamily: GAME_FONT,
+            fontSize: "15px",
             fontStyle: "bold",
-            color: "#fff1c1",
-            backgroundColor: "#17121bcc",
+            color: "#f7fbff",
+            backgroundColor: "#101923cc",
             padding: { x: 7, y: 4 }
         }).setOrigin(0, 0.5).setDepth(4);
 
@@ -366,7 +367,7 @@ export class EvidenceCourse {
         }
 
         if (layer.texture === "massiveLimestone") {
-            graphic.fillStyle(0x17121b, 0.72).fillEllipse(x(0.16), y(0.7), 108, 58);
+            graphic.fillStyle(0x101923, 0.72).fillEllipse(x(0.16), y(0.7), 108, 58);
             graphic.lineStyle(3, light, 0.72);
             [0.68, 0.73, 0.78].forEach((ratio) => {
                 graphic.lineBetween(x(ratio), y(0.42), x(ratio), y(0.72));
@@ -454,7 +455,7 @@ export class EvidenceCourse {
     createSample(layerIndex, clueIndex, clue, x, y) {
         const style = SAMPLE_STYLES[clue.type] || SAMPLE_STYLES.ROCK;
         const graphic = this.scene.add.graphics();
-        graphic.fillStyle(0x17121b, 0.92).lineStyle(3, 0xfff1c1, 1);
+        graphic.fillStyle(0x101923, 0.92).lineStyle(3, 0xf7fbff, 1);
         graphic.fillPoints([
             new Phaser.Geom.Point(0, -17),
             new Phaser.Geom.Point(15, -7),
@@ -471,10 +472,10 @@ export class EvidenceCourse {
         graphic.fillStyle(style.color, 1).fillCircle(0, -1, 9);
 
         const label = this.scene.add.text(0, -2, style.letter, {
-            fontFamily: "Arial, sans-serif",
-            fontSize: "13px",
+            fontFamily: GAME_FONT,
+            fontSize: "15px",
             fontStyle: "bold",
-            color: "#17121b"
+            color: "#101923"
         }).setOrigin(0.5);
         const container = this.scene.add.container(x, y, [graphic, label]).setDepth(8);
         this.scene.tweens.add({
@@ -501,19 +502,19 @@ export class EvidenceCourse {
 
     createFuelCan(layerIndex, x, y) {
         const graphic = this.scene.add.graphics();
-        graphic.fillStyle(0x17121b, 0.96).lineStyle(3, 0xfff1c1, 1);
+        graphic.fillStyle(0x101923, 0.96).lineStyle(3, 0xf7fbff, 1);
         graphic.fillRoundedRect(-17, -21, 34, 42, 5).strokeRoundedRect(-17, -21, 34, 42, 5);
         graphic.fillStyle(0xff694a, 1).fillRoundedRect(-12, -16, 24, 32, 3);
-        graphic.fillStyle(0x17121b, 1).fillRect(-6, -26, 15, 7);
+        graphic.fillStyle(0x101923, 1).fillRect(-6, -26, 15, 7);
         graphic.lineStyle(3, 0xffd166, 1).strokeCircle(0, 0, 7);
         graphic.lineBetween(-5, 0, 5, 0);
         graphic.lineBetween(0, -5, 0, 5);
         const label = this.scene.add.text(0, 30, "FUEL", {
-            fontFamily: "Arial, Helvetica, sans-serif",
-            fontSize: "11px",
+            fontFamily: GAME_FONT,
+            fontSize: "14px",
             fontStyle: "bold",
-            color: "#fff1c1",
-            backgroundColor: "#17121bcc",
+            color: "#f7fbff",
+            backgroundColor: "#101923cc",
             padding: { x: 4, y: 2 }
         }).setOrigin(0.5);
         const container = this.scene.add.container(x, y, [graphic, label]).setDepth(8);
@@ -554,7 +555,7 @@ export class EvidenceCourse {
             new Phaser.Geom.Point(width * 0.28, height * 0.46),
             new Phaser.Geom.Point(-width * 0.34, height * 0.42)
         ];
-        graphic.fillStyle(dark, 0.98).lineStyle(3, 0x211720, 0.95);
+        graphic.fillStyle(dark, 0.98).lineStyle(3, 0x172433, 0.95);
         graphic.fillPoints(points, true).strokePoints(points, true);
         graphic.lineStyle(3, light, 0.7);
         graphic.lineBetween(-width * 0.26, -5, width * 0.25, -8);
@@ -564,11 +565,11 @@ export class EvidenceCourse {
         const motion = moving ? challenge.obstacleMotion : "static";
         const warning = motion === "drop"
             ? this.scene.add.text(x, y + (challenge.amplitude || 80) * 0.52, "▼", {
-                fontFamily: "Arial, sans-serif",
+                fontFamily: GAME_FONT,
                 fontSize: "24px",
                 fontStyle: "bold",
                 color: "#ff5d43",
-                stroke: "#17121b",
+                stroke: "#101923",
                 strokeThickness: 4
             }).setOrigin(0.5).setDepth(7).setVisible(false)
             : null;

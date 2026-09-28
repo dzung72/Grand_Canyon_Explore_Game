@@ -1,6 +1,6 @@
 :root {
     color-scheme: dark;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: "Atkinson Hyperlegible Next", "IBM Plex Sans", Verdana, sans-serif;
 }
 
 * {
@@ -19,7 +19,7 @@ main,
 html,
 body {
     overflow: hidden;
-    background: #1b1420;
+    background: #0d1720;
     overscroll-behavior: none;
     touch-action: none;
 }
@@ -46,11 +46,11 @@ canvas {
     margin: 0;
     padding: 10px 14px;
     transform: translateX(-50%);
-    border: 3px solid #1b1420;
-    box-shadow: 4px 4px 0 #1b1420;
-    background: #fff1c1;
+    border: 3px solid #0d1720;
+    box-shadow: 4px 4px 0 #0d1720;
+    background: #f7fbff;
     color: #33231f;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     text-align: center;
     transition: opacity 180ms ease;
@@ -74,6 +74,6 @@ noscript {
     inset: 0;
     display: grid;
     place-items: center;
-    background: #1b1420;
-    color: #fff1c1;
+    background: #0d1720;
+    color: #f7fbff;
 }

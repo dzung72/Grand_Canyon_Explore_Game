@@ -1,8 +1,10 @@
+import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+
 export function makeDrill(scene, scale = 1) {
     const body = scene.add.graphics();
     body.fillStyle(0x271d28, 1).fillRect(-19, -35, 38, 55).fillRect(-25, 5, 50, 13);
-    body.fillStyle(0x45d6c4, 1).fillRect(-14, -30, 28, 44);
-    body.fillStyle(0x8ff2dc, 1).fillRect(-9, -25, 7, 31);
+    body.fillStyle(0x66e0cf, 1).fillRect(-14, -30, 28, 44);
+    body.fillStyle(0x91eadc, 1).fillRect(-9, -25, 7, 31);
     body.fillStyle(0xffd166, 1).fillRect(-9, -18, 18, 12);
     body.fillStyle(0x28394d, 1).fillRect(-5, -15, 10, 7);
     body.fillStyle(0xf5e4ba, 1).fillRect(-17, 15, 34, 7);
@@ -24,15 +26,15 @@ export function makeDrill(scene, scale = 1) {
 
 export function pixelButton(scene, label, callback) {
     const button = scene.add.text(0, 0, `[ ${label} ]`, {
-        fontFamily: "Arial, Helvetica, sans-serif",
-        fontSize: "17px",
+        fontFamily: GAME_FONT,
+        fontSize: "19px",
         fontStyle: "bold",
-        color: "#241923",
+        color: "#08131d",
         backgroundColor: "#ffd166",
         padding: { x: 12, y: 9 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    button.on("pointerover", () => button.setStyle({ backgroundColor: "#fff1c1" }));
+    button.on("pointerover", () => button.setStyle({ backgroundColor: "#f7fbff" }));
     button.on("pointerout", () => button.setStyle({ backgroundColor: "#ffd166" }));
     button.on("pointerdown", callback);
     return button;

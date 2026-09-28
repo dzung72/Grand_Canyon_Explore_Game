@@ -1,3 +1,5 @@
+import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+
 export class UpgradeOverlay {
     constructor(scene, getPlayWidth) {
         this.scene = scene;
@@ -14,17 +16,17 @@ export class UpgradeOverlay {
         const panelWidth = Math.min(width - 26, compact ? 480 : 760);
         const panelHeight = compact ? 510 : 390;
         const top = Math.max(82, (height - panelHeight) / 2);
-        const font = "Arial, Helvetica, sans-serif";
+        const font = GAME_FONT;
 
-        this.add(this.scene.add.rectangle(width / 2, height / 2, width, height, 0x09070b, 0.82)
+        this.add(this.scene.add.rectangle(width / 2, height / 2, width, height, 0x071018, 0.82)
             .setScrollFactor(0).setDepth(80));
-        this.add(this.scene.add.rectangle(centerX, top + panelHeight / 2, panelWidth, panelHeight, 0x17121b, 0.99)
-            .setStrokeStyle(4, 0x45d6c4, 1).setScrollFactor(0).setDepth(81));
+        this.add(this.scene.add.rectangle(centerX, top + panelHeight / 2, panelWidth, panelHeight, 0x101923, 0.99)
+            .setStrokeStyle(4, 0x66e0cf, 1).setScrollFactor(0).setDepth(81));
         this.add(this.scene.add.text(centerX, top + 18, "LAYER COMPLETE", {
-            fontFamily: font, fontSize: compact ? "22px" : "28px", fontStyle: "bold", color: "#ffd166"
+            fontFamily: font, fontSize: compact ? "25px" : "32px", fontStyle: "bold", color: "#ffd166"
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
         this.add(this.scene.add.text(centerX, top + 54, `${layer.name} • ${layer.ma} Ma\nCREDITS: ${credits}`, {
-            fontFamily: font, fontSize: compact ? "14px" : "17px", color: "#fff1c1", align: "center"
+            fontFamily: font, fontSize: compact ? "16px" : "20px", color: "#f7fbff", align: "center"
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(82));
 
         const descriptions = {
@@ -42,9 +44,9 @@ export class UpgradeOverlay {
                 `${choice.type.toUpperCase()}  LV ${upgrades[choice.type]}\n${descriptions[choice.type]}\n${choice.cost} CREDITS`,
                 {
                     fontFamily: font,
-                    fontSize: compact ? "13px" : "14px",
+                    fontSize: compact ? "15px" : "17px",
                     fontStyle: "bold",
-                    color: choice.available ? "#17121b" : "#8e7f78",
+                    color: choice.available ? "#101923" : "#8e7f78",
                     backgroundColor: choice.available ? "#ffd166" : "#332a2e",
                     padding: { x: 12, y: 12 },
                     fixedWidth: cardWidth,
@@ -60,7 +62,7 @@ export class UpgradeOverlay {
         });
 
         const skip = this.scene.add.text(centerX, top + panelHeight - 34, "[ SKIP UPGRADE ]", {
-            fontFamily: font, fontSize: "15px", fontStyle: "bold", color: "#8ff2dc"
+            fontFamily: font, fontSize: "18px", fontStyle: "bold", color: "#91eadc"
         }).setOrigin(0.5).setScrollFactor(0).setDepth(82).setInteractive({ useHandCursor: true });
         skip.on("pointerdown", () => onChoice(null));
         this.add(skip);

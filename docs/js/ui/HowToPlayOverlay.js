@@ -1,3 +1,5 @@
+import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+
 export class HowToPlayOverlay {
     constructor(scene) {
         this.scene = scene;
@@ -18,14 +20,14 @@ export class HowToPlayOverlay {
         const panelHeight = Math.min(height - 28, compact ? 560 : 650);
         const centerX = width / 2;
         const top = (height - panelHeight) / 2;
-        const font = "Arial, Helvetica, sans-serif";
+        const font = GAME_FONT;
 
         this.add(this.scene.add.rectangle(
             width / 2,
             height / 2,
             width,
             height,
-            0x09070b,
+            0x071018,
             0.9
         ).setScrollFactor(0).setDepth(150).setInteractive());
 
@@ -34,16 +36,16 @@ export class HowToPlayOverlay {
             height / 2,
             panelWidth,
             panelHeight,
-            0x17121b,
+            0x101923,
             0.99
         ).setStrokeStyle(5, 0xffa044, 1).setScrollFactor(0).setDepth(151));
 
         this.add(this.scene.add.text(centerX, top + 22, "HOW TO PLAY", {
             fontFamily: font,
-            fontSize: compact ? "24px" : "34px",
+            fontSize: compact ? "27px" : "38px",
             fontStyle: "bold",
             color: "#ffd166",
-            stroke: "#241923",
+            stroke: "#08131d",
             strokeThickness: 4
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(152));
 
@@ -51,9 +53,9 @@ export class HowToPlayOverlay {
             "GRAND CANYON FIELD EXPEDITION • 10 LAYERS",
             {
                 fontFamily: font,
-                fontSize: compact ? "11px" : "15px",
+                fontSize: compact ? "13px" : "17px",
                 fontStyle: "bold",
-                color: "#8ff2dc",
+                color: "#91eadc",
                 letterSpacing: 1
             }
         ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(152));
@@ -64,7 +66,7 @@ export class HowToPlayOverlay {
             ["3  COLLECT", "Find all five evidence samples in every rock layer."],
             ["4  ROCK CHECK", "Touch a quiz rock and answer using the field note you read."],
             ["5  FUEL + BOOST", "Fuel cans restore up to 25%. Hold Space/BOOST for 2.15× speed, but lose an extra 8% fuel per second."],
-            ["6  NEAR MISS", "Enter a rock's danger margin and escape without touching it. Chain up to x4 for bonus score."]
+            ["6  NEAR MISS", "Sweep past a rock without touching it. Speed stays normal, a whoosh confirms the dodge, and chains reach x4."]
         ];
         const body = compact
             ? instructions.map(([title, text]) => `${title}: ${text}`).join("\n")
@@ -75,10 +77,10 @@ export class HowToPlayOverlay {
             body,
             {
                 fontFamily: font,
-                fontSize: compact ? "10px" : "15px",
+                fontSize: compact ? "13px" : "17px",
                 fontStyle: "normal",
-                color: "#f8ead0",
-                lineSpacing: compact ? 3 : 4,
+                color: "#eaf2f8",
+                lineSpacing: compact ? 5 : 7,
                 wordWrap: { width: panelWidth - (compact ? 40 : 84), useAdvancedWrap: true }
             }
         ).setScrollFactor(0).setDepth(152));
@@ -87,9 +89,9 @@ export class HowToPlayOverlay {
             "RUN TIME + LAYER TIME pause during notes, quizzes and upgrades.",
             {
                 fontFamily: font,
-                fontSize: compact ? "11px" : "14px",
+                fontSize: compact ? "13px" : "16px",
                 fontStyle: "bold",
-                color: "#8ff2dc",
+                color: "#91eadc",
                 align: "center",
                 wordWrap: { width: panelWidth - 36, useAdvancedWrap: true }
             }
@@ -99,9 +101,9 @@ export class HowToPlayOverlay {
             "[ START EXPEDITION ]",
             {
                 fontFamily: font,
-                fontSize: compact ? "15px" : "19px",
+                fontSize: compact ? "17px" : "21px",
                 fontStyle: "bold",
-                color: "#17121b",
+                color: "#101923",
                 backgroundColor: "#ffd166",
                 padding: { x: 16, y: 10 }
             }

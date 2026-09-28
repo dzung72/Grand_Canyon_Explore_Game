@@ -139,10 +139,7 @@ class RetroMusicManager {
                 [174, 0.14, "sawtooth", 0.18, 0],
                 [116, 0.24, "square", 0.13, 0.1]
             ],
-            nearMiss: [
-                [720, 0.08, "sine", 0.09, 0],
-                [960, 0.12, "triangle", 0.08, 0.055]
-            ],
+            nearMiss: [],
             boost: [
                 [120, 0.09, "sawtooth", 0.13, 0],
                 [240, 0.16, "triangle", 0.12, 0.055]
@@ -162,7 +159,7 @@ class RetroMusicManager {
         if (name === "bump") this.noise(0.14, 0.32, 680);
         if (name === "correct") this.noise(0.16, 0.28, 1450, 0.02);
         if (name === "wrong") this.noise(0.12, 0.12, 1100, 0.08);
-        if (name === "nearMiss") this.noise(0.18, 0.18, 2100, 0, "highpass", 0.9);
+        if (name === "nearMiss") this.whoosh();
         if (name === "boost") this.noise(0.16, 0.16, 950, 0, "bandpass", 0.8);
     }
 
@@ -262,6 +259,48 @@ class RetroMusicManager {
             oscillator.start(voiceStart);
             oscillator.stop(voiceStart + voice.duration + 0.03);
         });
+    }
+
+    whoosh() {
+        if (!this.context || !this.sfxBus) return;
+        const duration = 0.42;
+        const sampleRate = this.context.sampleRate;
+        const buffer = this.context.createBuffer(1, Math.ceil(sampleRate * duration), sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let index = 0; index < data.length; index += 1) {
+            const progress = index / data.length;
+            const envelope = Math.sin(Math.PI * progress) ** 1.6;
+            data[index] = (Math.random() * 2 - 1) * envelope;
+        }
+
+        const source = this.context.createBufferSource();
+        const filter = this.context.createBiquadFilter();
+        const gain = this.context.createGain();
+        const panner = this.context.createStereoPanner?.();
+        const start = this.context.currentTime;
+        const direction = Math.random() > 0.5 ? 1 : -1;
+
+        source.buffer = buffer;
+        filter.type = "bandpass";
+        filter.Q.setValueAtTime(0.85, start);
+        filter.frequency.setValueAtTime(3200, start);
+        filter.frequency.exponentialRampToValueAtTime(520, start + duration);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.42, start + 0.075);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+        source.connect(filter);
+        if (panner) {
+            panner.pan.setValueAtTime(-0.82 * direction, start);
+            panner.pan.linearRampToValueAtTime(0.82 * direction, start + duration);
+            filter.connect(panner);
+            panner.connect(gain);
+        } else {
+            filter.connect(gain);
+        }
+        gain.connect(this.sfxBus);
+        source.start(start);
+        source.stop(start + duration + 0.03);
     }
 
     noise(duration, volume, cutoff, delay = 0, filterType = "lowpass", q = 0.7) {

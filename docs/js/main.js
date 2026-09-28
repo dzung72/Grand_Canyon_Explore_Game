@@ -9,9 +9,15 @@ async function startGame() {
         return;
     }
 
+    try {
+        await document.fonts?.load('700 18px "Atkinson Hyperlegible Next"');
+    } catch (error) {
+        console.warn("Readable web font could not load; using the system fallback.", error);
+    }
+
     const [{ ExpeditionScene }, { ResultsScene }] = await Promise.all([
-        import("./scenes/ExpeditionScene.js?v=4.6.0"),
-        import("./scenes/ResultsScene.js?v=4.5.0")
+        import("./scenes/ExpeditionScene.js?v=4.6.1"),
+        import("./scenes/ResultsScene.js?v=4.6.1")
     ]);
 
     loadDatabase();
@@ -20,7 +26,7 @@ async function startGame() {
     const config = {
         type: Phaser.AUTO,
         parent: "game-container",
-        backgroundColor: "#1b1420",
+        backgroundColor: "#0d1720",
         pixelArt: true,
         antialias: false,
         roundPixels: true,

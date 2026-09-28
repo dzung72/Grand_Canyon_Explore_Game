@@ -1,3 +1,5 @@
+import { GAME_FONT } from "../core/theme.js?v=4.6.1";
+
 const Phaser = window.Phaser;
 
 export class LayerBriefingOverlay {
@@ -26,14 +28,14 @@ export class LayerBriefingOverlay {
         const panelWidth = Math.min(playWidth - 28, compact ? 430 : 650);
         const panelHeight = compact ? 286 : 304;
         const top = Math.max(92, (screenHeight - panelHeight) / 2);
-        const font = "Arial, Helvetica, sans-serif";
+        const font = GAME_FONT;
 
         this.add(this.scene.add.rectangle(
             playWidth / 2,
             screenHeight / 2,
             playWidth,
             screenHeight,
-            0x09070b,
+            0x071018,
             0.72
         ).setScrollFactor(0).setDepth(100).setInteractive());
 
@@ -42,7 +44,7 @@ export class LayerBriefingOverlay {
             top + panelHeight / 2,
             panelWidth,
             panelHeight,
-            0x17121b,
+            0x101923,
             0.98
         ).setStrokeStyle(5, layer.color, 1).setScrollFactor(0).setDepth(101));
 
@@ -50,18 +52,18 @@ export class LayerBriefingOverlay {
             `${isNew ? "NEW STRATUM" : "FIELD RESURVEY"}  ${String(index + 1).padStart(2, "0")}/${total}`,
             {
                 fontFamily: font,
-                fontSize: compact ? "13px" : "16px",
+                fontSize: compact ? "15px" : "18px",
                 fontStyle: "bold",
-                color: "#8ff2dc",
+                color: "#91eadc",
                 letterSpacing: 1
             }
         ).setOrigin(0.5, 0).setScrollFactor(0).setDepth(102));
 
         this.add(this.scene.add.text(centerX, top + 50, layer.name.toUpperCase(), {
             fontFamily: font,
-            fontSize: compact ? "22px" : "30px",
+            fontSize: compact ? "25px" : "34px",
             fontStyle: "bold",
-            color: "#fff1c1",
+            color: "#f7fbff",
             align: "center",
             wordWrap: { width: panelWidth - 36, useAdvancedWrap: true }
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(102));
@@ -70,8 +72,8 @@ export class LayerBriefingOverlay {
             `${layer.age}  •  ~${layer.ma.toLocaleString()} Ma\n${layer.rockType}\n\n${challenge.name}: ${challenge.briefing}`,
             {
                 fontFamily: font,
-                fontSize: compact ? "14px" : "17px",
-                color: "#f8ead0",
+                fontSize: compact ? "16px" : "20px",
+                color: "#eaf2f8",
                 lineSpacing: compact ? 5 : 7,
                 align: "center",
                 wordWrap: { width: panelWidth - 42, useAdvancedWrap: true }
@@ -82,10 +84,10 @@ export class LayerBriefingOverlay {
             "CONTINUE IN 5.5s  •  click after 1s to skip",
             {
                 fontFamily: font,
-                fontSize: compact ? "12px" : "14px",
+                fontSize: compact ? "14px" : "16px",
                 fontStyle: "bold",
                 color: "#ffd166",
-                backgroundColor: "#30212add",
+                backgroundColor: "#152433ee",
                 padding: { x: 12, y: 7 }
             }
         ).setOrigin(0.5).setScrollFactor(0).setDepth(103).setInteractive({ useHandCursor: true }));
@@ -103,7 +105,7 @@ export class LayerBriefingOverlay {
             .setText(canSkip
                 ? `CONTINUE  •  AUTO ${remaining.toFixed(1)}s`
                 : `READING…  ${remaining.toFixed(1)}s`)
-            .setColor(canSkip ? "#8ff2dc" : "#ffd166");
+            .setColor(canSkip ? "#91eadc" : "#ffd166");
     }
 
     tryContinue() {

@@ -1,17 +1,18 @@
 import { ROCK_LAYERS, getLayerEvidence, getLayerQuiz } from "../data/layers.js?v=4.2.1";
 import { database, currentRecord, formatRunTime, saveDatabase } from "../services/storage.js?v=4.4.0";
-import { makeDrill } from "../ui/components.js";
+import { makeDrill } from "../ui/components.js?v=4.6.1";
 import { showStatus } from "../core/status.js";
+import { GAME_FONT } from "../core/theme.js?v=4.6.1";
 import { ExpeditionWorld } from "../world/ExpeditionWorld.js";
 import { ImpactEffects } from "../effects/ImpactEffects.js?v=4.4.0";
-import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=4.5.2";
+import { EvidenceCourse } from "../gameplay/EvidenceCourse.js?v=4.6.1";
 import { getLayerChallenge } from "../gameplay/layerChallenges.js?v=4.4.6";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js";
-import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=4.2.0";
-import { QuizOverlay } from "../ui/QuizOverlay.js?v=4.1.1";
-import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=4.4.7";
-import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=4.6.0";
-import { retroMusic } from "../services/AudioManager.js?v=4.5.0";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.1";
+import { LayerBriefingOverlay } from "../ui/LayerBriefingOverlay.js?v=4.6.1";
+import { QuizOverlay } from "../ui/QuizOverlay.js?v=4.6.1";
+import { UpgradeOverlay } from "../ui/UpgradeOverlay.js?v=4.6.1";
+import { HowToPlayOverlay } from "../ui/HowToPlayOverlay.js?v=4.6.1";
+import { retroMusic } from "../services/AudioManager.js?v=4.6.1";
 
 const Phaser = window.Phaser;
 
@@ -49,7 +50,6 @@ export class ExpeditionScene extends Phaser.Scene {
         this.lastBoostParticleAt = 0;
         this.nearMissCombo = 0;
         this.nearMissExpiresAt = 0;
-        this.nearMissSlowUntil = 0;
         this.totalNearMisses = 0;
         this.bestNearMissCombo = 0;
         this.challengeClockMs = 0;
@@ -128,8 +128,8 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     createInterface() {
-        const font = "Arial, Helvetica, sans-serif";
-        const shadow = { offsetX: 3, offsetY: 3, color: "#241923", blur: 0, fill: true };
+        const font = GAME_FONT;
+        const shadow = { offsetX: 3, offsetY: 3, color: "#08131d", blur: 0, fill: true };
 
         this.titleText = this.add.text(
             18,
@@ -139,22 +139,22 @@ export class ExpeditionScene extends Phaser.Scene {
             fontFamily: font,
             fontSize: this.viewWidth < 650 ? "18px" : "28px",
             fontStyle: "bold",
-            color: "#fff1c1",
+            color: "#f7fbff",
             shadow
             }
         ).setScrollFactor(0).setDepth(40);
         this.progressText = this.add.text(20, 52, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "11px" : "14px",
+            fontSize: this.viewWidth < 650 ? "13px" : "16px",
             color: "#ffd166",
             shadow
         }).setScrollFactor(0).setDepth(40);
         this.helpText = this.add.text(this.viewWidth / 2, this.viewHeight - 28, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "11px" : "15px",
+            fontSize: this.viewWidth < 650 ? "14px" : "18px",
             fontStyle: "bold",
-            color: "#fff1c1",
-            backgroundColor: "#2d2029dd",
+            color: "#f7fbff",
+            backgroundColor: "#142330f2",
             padding: { x: 12, y: 8 },
             shadow
         }).setOrigin(0.5).setScrollFactor(0).setDepth(40);
@@ -162,18 +162,18 @@ export class ExpeditionScene extends Phaser.Scene {
         this.powerGraphics = this.add.graphics().setScrollFactor(0).setDepth(40);
         this.powerText = this.add.text(0, 0, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "11px" : "14px",
+            fontSize: this.viewWidth < 650 ? "13px" : "16px",
             fontStyle: "bold",
-            color: "#fff1c1",
+            color: "#f7fbff",
             shadow
         }).setScrollFactor(0).setDepth(41);
 
         this.fullscreenButton = this.add.text(this.viewWidth - 16, 16, "[ FULLSCREEN ]", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "11px" : "14px",
+            fontSize: this.viewWidth < 650 ? "13px" : "16px",
             fontStyle: "bold",
-            color: "#fff1c1",
-            backgroundColor: "#39252bdd",
+            color: "#f7fbff",
+            backgroundColor: "#1b2b39f2",
             padding: { x: 9, y: 7 }
         }).setOrigin(1, 0).setScrollFactor(0).setDepth(45).setInteractive({ useHandCursor: true });
         this.fullscreenButton.on("pointerdown", () => {
@@ -187,10 +187,10 @@ export class ExpeditionScene extends Phaser.Scene {
             `[ ${retroMusic.label()} ]`,
             {
                 fontFamily: font,
-                fontSize: this.viewWidth < 650 ? "10px" : "13px",
+                fontSize: this.viewWidth < 650 ? "12px" : "15px",
                 fontStyle: "bold",
-                color: "#17121b",
-                backgroundColor: "#8ff2dc",
+                color: "#101923",
+                backgroundColor: "#91eadc",
                 padding: { x: 8, y: 7 }
             }
         ).setOrigin(1, 0).setScrollFactor(0).setDepth(46).setInteractive({ useHandCursor: true });
@@ -206,9 +206,9 @@ export class ExpeditionScene extends Phaser.Scene {
             `[ ${retroMusic.sfxLabel()} ]`,
             {
                 fontFamily: font,
-                fontSize: this.viewWidth < 650 ? "10px" : "13px",
+                fontSize: this.viewWidth < 650 ? "12px" : "15px",
                 fontStyle: "bold",
-                color: "#17121b",
+                color: "#101923",
                 backgroundColor: "#ffd166",
                 padding: { x: 8, y: 7 }
             }
@@ -225,10 +225,10 @@ export class ExpeditionScene extends Phaser.Scene {
             "[ FIELD NOTES ]",
             {
                 fontFamily: font,
-                fontSize: this.viewWidth < 650 ? "10px" : "13px",
+                fontSize: this.viewWidth < 650 ? "12px" : "15px",
                 fontStyle: "bold",
-                color: "#8ff2dc",
-                backgroundColor: "#39252bdd",
+                color: "#91eadc",
+                backgroundColor: "#1b2b39f2",
                 padding: { x: 8, y: 7 }
             }
         ).setOrigin(1, 0).setScrollFactor(0).setDepth(45).setInteractive({ useHandCursor: true });
@@ -241,26 +241,26 @@ export class ExpeditionScene extends Phaser.Scene {
             fontFamily: font,
             fontSize: this.viewWidth < 650 ? "18px" : "28px",
             fontStyle: "bold",
-            color: "#fff1c1",
-            backgroundColor: "#291b22ee",
+            color: "#f7fbff",
+            backgroundColor: "#13222ff2",
             padding: { x: 18, y: 14 },
-            stroke: "#ff8a3d",
+            stroke: "#ffb35c",
             strokeThickness: 3,
             shadow
         }).setOrigin(0.5).setScrollFactor(0).setDepth(50).setVisible(false);
 
-        this.drillHudShade = this.add.rectangle(0, 0, this.viewWidth, 80, 0x17121b, 0.9)
+        this.drillHudShade = this.add.rectangle(0, 0, this.viewWidth, 80, 0x101923, 0.9)
             .setOrigin(0).setScrollFactor(0).setDepth(35).setVisible(false);
         this.drillHudText = this.add.text(16, 12, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "12px" : "15px",
+            fontSize: this.viewWidth < 650 ? "14px" : "17px",
             fontStyle: "bold",
-            color: "#fff1c1",
+            color: "#f7fbff",
             lineSpacing: 4
         }).setScrollFactor(0).setDepth(36).setVisible(false);
         this.economyText = this.add.text(0, 12, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "13px" : "17px",
+            fontSize: this.viewWidth < 650 ? "15px" : "19px",
             fontStyle: "bold",
             color: "#ffd166",
             align: "right"
@@ -270,11 +270,11 @@ export class ExpeditionScene extends Phaser.Scene {
 
         this.layerBanner = this.add.text(this.viewWidth / 2, 96, "", {
             fontFamily: font,
-            fontSize: this.viewWidth < 650 ? "13px" : "17px",
+            fontSize: this.viewWidth < 650 ? "15px" : "20px",
             fontStyle: "bold",
-            color: "#fff1c1",
+            color: "#f7fbff",
             align: "center",
-            backgroundColor: "#211720e8",
+            backgroundColor: "#172433e8",
             padding: { x: 16, y: 11 },
             wordWrap: { width: Math.min(540, this.viewWidth - 30), useAdvancedWrap: true },
             stroke: "#ff9f43",
@@ -298,32 +298,33 @@ export class ExpeditionScene extends Phaser.Scene {
             noteTop,
             noteWidth,
             noteHeight,
-            0x17121b,
+            0x101923,
             0.94
-        ).setOrigin(0).setStrokeStyle(3, 0x45d6c4, 1).setScrollFactor(0).setDepth(38).setVisible(false);
+        ).setOrigin(0).setStrokeStyle(3, 0x66e0cf, 1).setScrollFactor(0).setDepth(38).setVisible(false);
         this.currentNoteTitle = this.add.text(noteLeft + 13, noteTop + 11, "", {
             fontFamily: font,
-            fontSize: compact ? "14px" : "17px",
+            fontSize: compact ? "16px" : "20px",
             fontStyle: "bold",
-            color: "#fff1c1",
+            color: "#f7fbff",
             wordWrap: { width: noteWidth - 26, useAdvancedWrap: true }
         }).setScrollFactor(0).setDepth(39).setVisible(false);
         this.currentNoteBody = this.add.text(noteLeft + 13, noteTop + (compact ? 52 : 61), "", {
             fontFamily: font,
-            fontSize: compact ? "14px" : "15px",
-            color: "#f8ead0",
+            fontSize: compact ? "16px" : "18px",
+            color: "#eaf2f8",
             lineSpacing: compact ? 6 : 8,
             wordWrap: { width: noteWidth - 26, useAdvancedWrap: true }
         }).setScrollFactor(0).setDepth(39).setVisible(false);
         this.currentNoteHint = this.add.text(
             noteLeft + 13,
-            noteTop + noteHeight - 23,
+            noteTop + noteHeight - 31,
             "Collect a sample to reveal its field note.",
             {
                 fontFamily: font,
-                fontSize: compact ? "12px" : "13px",
+                fontSize: compact ? "14px" : "15px",
                 fontStyle: "italic",
-                color: "#8ff2dc"
+                color: "#91eadc",
+                wordWrap: { width: noteWidth - 26, useAdvancedWrap: true }
             }
         ).setScrollFactor(0).setDepth(39).setVisible(false);
 
@@ -333,9 +334,9 @@ export class ExpeditionScene extends Phaser.Scene {
             "[ HOLD BOOST • SPACE ]",
             {
                 fontFamily: font,
-                fontSize: this.viewWidth < 650 ? "11px" : "14px",
+                fontSize: this.viewWidth < 650 ? "14px" : "16px",
                 fontStyle: "bold",
-                color: "#17121b",
+                color: "#101923",
                 backgroundColor: "#ffd166",
                 padding: { x: 11, y: 9 }
             }
@@ -361,16 +362,16 @@ export class ExpeditionScene extends Phaser.Scene {
         });
 
         this.secretPanel = this.add.text(this.viewWidth / 2, this.viewHeight * 0.3, "", {
-            fontFamily: "Arial, sans-serif",
-            fontSize: this.viewWidth < 650 ? "14px" : "18px",
+            fontFamily: GAME_FONT,
+            fontSize: this.viewWidth < 650 ? "16px" : "20px",
             fontStyle: "bold",
-            color: "#fff7df",
+            color: "#eaf2f8",
             align: "left",
             lineSpacing: 7,
-            backgroundColor: "#17121bf2",
+            backgroundColor: "#101923f2",
             padding: { x: 18, y: 15 },
             wordWrap: { width: Math.min(610, this.viewWidth - 34), useAdvancedWrap: true },
-            stroke: "#211720",
+            stroke: "#172433",
             strokeThickness: 2
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(59).setVisible(false);
     }
@@ -480,7 +481,6 @@ export class ExpeditionScene extends Phaser.Scene {
         this.wasBoosting = false;
         this.nearMissCombo = 0;
         this.nearMissExpiresAt = 0;
-        this.nearMissSlowUntil = 0;
         this.pendingTapDistance = 0;
         retroMusic.setMotor(false);
         retroMusic.setAmbience(false);
@@ -560,7 +560,7 @@ export class ExpeditionScene extends Phaser.Scene {
         const anchors = this.world.bandAnchors();
         const color = this.power > 0.82 ? 0xff694a : this.power > 0.45 ? 0xffa044 : 0x4a2528;
         const width = Math.max(4, Math.round(5 + this.power * 5));
-        this.bandGraphics.clear().lineStyle(width + 3, 0x241923, 1);
+        this.bandGraphics.clear().lineStyle(width + 3, 0x08131d, 1);
         this.bandGraphics.lineBetween(anchors.left.x, anchors.left.y, this.drill.x, this.drill.y + 4);
         this.bandGraphics.lineBetween(anchors.right.x, anchors.right.y, this.drill.x, this.drill.y + 4);
         this.bandGraphics.lineStyle(width, color, 1);
@@ -579,7 +579,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.aimGraphics.clear();
         if (this.roundState !== "dragging") return;
         const velocity = this.predictedVelocity();
-        const color = this.power > 0.75 ? 0xffd166 : 0xfff1c1;
+        const color = this.power > 0.75 ? 0xffd166 : 0xf7fbff;
         this.aimGraphics.fillStyle(color, 0.92);
         for (let step = 1; step <= 16; step += 1) {
             const time = step * 0.065;
@@ -596,9 +596,9 @@ export class ExpeditionScene extends Phaser.Scene {
         const width = compact ? Math.min(210, this.viewWidth - 36) : Math.min(280, this.viewWidth * 0.3);
         const x = compact ? 18 : this.viewWidth - width - 20;
         const y = compact ? 84 : 70;
-        const color = this.power > 0.82 ? 0xff5d43 : this.power > 0.5 ? 0xffa044 : 0x45d6c4;
-        this.powerGraphics.clear().fillStyle(0x241923, 0.92).fillRect(x, y, width, 22);
-        this.powerGraphics.fillStyle(0xfff1c1, 1).fillRect(x + 4, y + 4, width - 8, 14);
+        const color = this.power > 0.82 ? 0xff5d43 : this.power > 0.5 ? 0xffa044 : 0x66e0cf;
+        this.powerGraphics.clear().fillStyle(0x08131d, 0.92).fillRect(x, y, width, 22);
+        this.powerGraphics.fillStyle(0xf7fbff, 1).fillRect(x + 4, y + 4, width - 8, 14);
         this.powerGraphics.fillStyle(color, 1).fillRect(x + 4, y + 4, (width - 8) * this.power, 14);
         this.powerText.setText(`LAUNCH POWER ${String(Math.round(this.power * 100)).padStart(3, "0")}%`);
         this.powerText.setPosition(x, y + 28);
@@ -805,7 +805,7 @@ export class ExpeditionScene extends Phaser.Scene {
     drawShaftCorridor(laneGap) {
         const height = ROCK_LAYERS.length * this.layerHeight;
         this.shaftGraphics = this.add.graphics().setDepth(1);
-        this.shaftGraphics.fillStyle(0x17121b, 0.025)
+        this.shaftGraphics.fillStyle(0x101923, 0.025)
             .fillRect(0, this.layerStartY, this.viewWidth, height);
     }
 
@@ -833,8 +833,7 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     updateDrilling(time, delta) {
-        const slowMotionScale = time < this.nearMissSlowUntil ? 0.28 : 1;
-        const dt = Math.min(delta / 1000, 0.034) * slowMotionScale;
+        const dt = Math.min(delta / 1000, 0.034);
         const layerIndex = Phaser.Math.Clamp(
             Math.floor((this.drill.y - this.layerStartY) / this.layerHeight),
             0,
@@ -847,7 +846,7 @@ export class ExpeditionScene extends Phaser.Scene {
         if (this.nearMissCombo > 0 && time > this.nearMissExpiresAt) {
             this.nearMissCombo = 0;
         }
-        this.challengeClockMs += delta * slowMotionScale;
+        this.challengeClockMs += delta;
         const layer = ROCK_LAYERS[layerIndex];
         const challenge = getLayerChallenge(layerIndex);
         this.evidenceCourse.update(this.challengeClockMs);
@@ -902,7 +901,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.drill.setScale(boosting ? 1.1 : 1);
         this.boostButton
             .setText(boosting ? "[ BOOSTING • FUEL −8%/s ]" : "[ HOLD BOOST • SPACE ]")
-            .setColor(boosting ? "#fff1c1" : "#17121b")
+            .setColor(boosting ? "#f7fbff" : "#101923")
             .setBackgroundColor(boosting ? "#c44437" : "#ffd166");
         const passFactor = knownLayer ? (this.usesShaft ? 0.55 : 0.78) : 1;
         const slowFactor = time < this.slowUntil ? 0.42 : 1;
@@ -962,7 +961,7 @@ export class ExpeditionScene extends Phaser.Scene {
             this.energy -= this.energyMax * 0.15;
             this.cameras.main.flash(110, 255, 96, 48, false);
             retroMusic.effect("hazard");
-            this.showScreenPopup("HOT BASALT  −15% FUEL", "#ff8a66");
+            this.showScreenPopup("HOT BASALT  −15% FUEL", "#ff9f85");
             this.helpText.setText("HOT BASALT POCKET • FUEL LOST");
             this.alertUntil = time + 1350;
         }
@@ -1073,7 +1072,6 @@ export class ExpeditionScene extends Phaser.Scene {
         if (time > this.nearMissExpiresAt) this.nearMissCombo = 0;
         this.nearMissCombo = Math.min(4, this.nearMissCombo + 1);
         this.nearMissExpiresAt = time + 2500;
-        this.nearMissSlowUntil = time + 150;
         this.totalNearMisses += 1;
         this.bestNearMissCombo = Math.max(this.bestNearMissCombo, this.nearMissCombo);
         const scoreGain = 50 * this.nearMissCombo;
@@ -1082,7 +1080,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.cameras.main.shake(70, 0.0016);
         this.cameras.main.flash(45, 143, 242, 220, false);
         const comboText = this.nearMissCombo > 1 ? ` x${this.nearMissCombo}` : "";
-        this.showScreenPopup(`NEAR MISS${comboText}  +${scoreGain}`, "#8ff2dc");
+        this.showScreenPopup(`NEAR MISS${comboText}  +${scoreGain}`, "#91eadc");
         this.helpText.setText(
             this.nearMissCombo > 1
                 ? `SKILL STREAK x${this.nearMissCombo} • KEEP MOVING`
@@ -1097,14 +1095,14 @@ export class ExpeditionScene extends Phaser.Scene {
             this.correctAnswers += 1;
             this.score += 50;
             retroMusic.effect("correct");
-            this.showScreenPopup("CORRECT  +50", "#8ff2dc");
+            this.showScreenPopup("CORRECT  +50", "#91eadc");
             this.helpText.setText(`CORRECT • ${layer.name.toUpperCase()} ROCK CLEARED`);
         } else {
             this.wrongAnswers += 1;
             this.score -= 100;
             this.slowUntil = this.time.now + 2000;
             retroMusic.effect("wrong");
-            this.showScreenPopup("WRONG  −100 • SLOW 2s", "#ff8a66");
+            this.showScreenPopup("WRONG  −100 • SLOW 2s", "#ff9f85");
             this.helpText.setText("CHECK THE NOTE • DRILL SLOWED FOR 2 SECONDS");
         }
         this.setCurrentNoteVisible(true);
@@ -1116,13 +1114,13 @@ export class ExpeditionScene extends Phaser.Scene {
     showScreenPopup(message, color) {
         const centerX = (this.corridorLeft + this.corridorRight) / 2;
         const popup = this.add.text(centerX, this.viewHeight * 0.44, message, {
-            fontFamily: "Arial, Helvetica, sans-serif",
+            fontFamily: GAME_FONT,
             fontSize: this.viewWidth < 650 ? "18px" : "26px",
             fontStyle: "bold",
             color,
-            backgroundColor: "#17121bee",
+            backgroundColor: "#101923ee",
             padding: { x: 14, y: 10 },
-            stroke: "#17121b",
+            stroke: "#101923",
             strokeThickness: 3
         }).setOrigin(0.5).setScrollFactor(0).setDepth(95);
         this.tweens.add({
@@ -1159,12 +1157,12 @@ export class ExpeditionScene extends Phaser.Scene {
             sample.y - 25,
             `+100 SCORE\n+${creditGain} CREDITS`,
             {
-            fontFamily: "Arial, Helvetica, sans-serif",
+            fontFamily: GAME_FONT,
             fontSize: "17px",
             fontStyle: "bold",
             color: "#ffd166",
             align: "center",
-            stroke: "#17121b",
+            stroke: "#101923",
             strokeThickness: 4
             }
         ).setOrigin(0.5).setDepth(48);
@@ -1191,7 +1189,7 @@ export class ExpeditionScene extends Phaser.Scene {
         if (before >= this.energyMax * 0.98) {
             if (!fuelCan.fullHintShown) {
                 fuelCan.fullHintShown = true;
-                this.showScreenPopup("FUEL FULL • SAVE IT", "#8ff2dc");
+                this.showScreenPopup("FUEL FULL • SAVE IT", "#91eadc");
                 this.helpText.setText("FUEL FULL • RETURN AFTER USING ENERGY");
                 this.alertUntil = time + 1200;
             }
@@ -1202,7 +1200,7 @@ export class ExpeditionScene extends Phaser.Scene {
         this.evidenceCourse.collectFuelCan(fuelCan);
         retroMusic.effect("fuel");
         this.cameras.main.flash(90, 69, 214, 196, false);
-        this.showScreenPopup(`FUEL +${restored}%`, "#8ff2dc");
+        this.showScreenPopup(`FUEL +${restored}%`, "#91eadc");
         this.helpText.setText(`FUEL CAN RECOVERED • +${restored}% ENERGY`);
         this.alertUntil = time + 1250;
     }
@@ -1381,7 +1379,7 @@ export class ExpeditionScene extends Phaser.Scene {
             return `${marker} ${type}  ${note}`;
         }).join("\n"));
         this.currentNoteHint.setText(
-            `${collected.size}/5 • +100 score • sample credits increase with Earnings.`
+            `${collected.size}/5 • EACH SAMPLE: +100 SCORE + CREDITS`
         );
     }
 
@@ -1429,7 +1427,7 @@ export class ExpeditionScene extends Phaser.Scene {
             this.drill.y - Math.cos(angle) * 42,
             8,
             26,
-            Phaser.Utils.Array.GetRandom([0x8ff2dc, 0xffd166, layer.color]),
+            Phaser.Utils.Array.GetRandom([0x91eadc, 0xffd166, layer.color]),
             0.86
         ).setAngle(this.drill.angle).setDepth(9);
         this.tweens.add({
@@ -1448,9 +1446,9 @@ export class ExpeditionScene extends Phaser.Scene {
         const x = (this.playAreaRight || this.viewWidth) - width - 8;
         const y = 52;
         const ratio = Phaser.Math.Clamp(this.energy / this.energyMax, 0, 1);
-        const color = ratio > 0.55 ? 0x45d6c4 : ratio > 0.25 ? 0xffa044 : 0xff5d43;
+        const color = ratio > 0.55 ? 0x66e0cf : ratio > 0.25 ? 0xffa044 : 0xff5d43;
         this.energyGraphics.clear().fillStyle(0x0e0a10, 1).fillRect(x, y, width, 20);
-        this.energyGraphics.fillStyle(0xfff1c1, 1).fillRect(x + 3, y + 3, width - 6, 14);
+        this.energyGraphics.fillStyle(0xf7fbff, 1).fillRect(x + 3, y + 3, width - 6, 14);
         this.energyGraphics.fillStyle(color, 1).fillRect(x + 3, y + 3, (width - 6) * ratio, 14);
     }
 
@@ -1460,13 +1458,13 @@ export class ExpeditionScene extends Phaser.Scene {
         const center = (this.corridorLeft + this.corridorRight) / 2;
         const gap = 34;
         const collected = this.layerSamples[layerIndex] || new Set();
-        const colors = [0xf6e27a, 0xffa044, 0xf28dc8, 0x45d6c4, 0xffd166];
+        const colors = [0xf6e27a, 0xffa044, 0xf28dc8, 0x66e0cf, 0xffd166];
         this.laneGraphics.clear();
         for (let clue = 0; clue < 5; clue += 1) {
             const found = collected.has(clue);
             const x = center + (clue - 2) * gap;
             this.laneGraphics.fillStyle(found ? colors[clue] : 0x3b2a32, 1);
-            this.laneGraphics.lineStyle(2, found ? 0xfff1c1 : 0x826b69, 1);
+            this.laneGraphics.lineStyle(2, found ? 0xf7fbff : 0x826b69, 1);
             this.laneGraphics.fillRect(x - 10, y - 10, 20, 20);
             this.laneGraphics.strokeRect(x - 10, y - 10, 20, 20);
         }
@@ -1499,13 +1497,13 @@ export class ExpeditionScene extends Phaser.Scene {
             this.viewHeight * 0.48,
             message,
             {
-            fontFamily: "Arial, Helvetica, sans-serif",
+            fontFamily: GAME_FONT,
             fontSize: this.viewWidth < 650 ? "18px" : "26px",
             fontStyle: "bold",
-            color: "#fff1c1",
-            backgroundColor: "#211720ee",
+            color: "#f7fbff",
+            backgroundColor: "#172433ee",
             padding: { x: 16, y: 12 },
-            stroke: "#ff8a3d",
+            stroke: "#ffb35c",
             strokeThickness: 2
             }
         ).setOrigin(0.5).setScrollFactor(0).setDepth(60);

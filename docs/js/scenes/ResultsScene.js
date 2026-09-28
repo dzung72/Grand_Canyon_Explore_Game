@@ -9,9 +9,10 @@ import {
     leaderboard,
     saveDatabase
 } from "../services/storage.js?v=4.4.0";
-import { pixelButton } from "../ui/components.js";
-import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js";
-import { retroMusic } from "../services/AudioManager.js?v=4.5.0";
+import { pixelButton } from "../ui/components.js?v=4.6.1";
+import { LayerNotebookOverlay } from "../ui/LayerNotebookOverlay.js?v=4.6.1";
+import { retroMusic } from "../services/AudioManager.js?v=4.6.1";
+import { GAME_FONT } from "../core/theme.js?v=4.6.1";
 
 const Phaser = window.Phaser;
 
@@ -38,11 +39,11 @@ export class ResultsScene extends Phaser.Scene {
 
     drawMusicButton() {
         const button = this.add.text(14, 14, `[ ${retroMusic.label()} ]`, {
-            fontFamily: "Arial, Helvetica, sans-serif",
-            fontSize: this.width < 650 ? "10px" : "12px",
+            fontFamily: GAME_FONT,
+            fontSize: this.width < 650 ? "13px" : "15px",
             fontStyle: "bold",
-            color: "#17121b",
-            backgroundColor: "#8ff2dc",
+            color: "#101923",
+            backgroundColor: "#91eadc",
             padding: { x: 8, y: 6 }
         }).setInteractive({ useHandCursor: true });
         button.on("pointerdown", async () => {
@@ -53,7 +54,7 @@ export class ResultsScene extends Phaser.Scene {
 
     drawBackground() {
         const g = this.add.graphics();
-        const colors = [0x17121b, 0x251721, 0x3b2229, 0x59312f, 0x82433a];
+        const colors = [0x101923, 0x251721, 0x3b2229, 0x59312f, 0x82433a];
         const band = Math.ceil(this.height / colors.length);
         colors.forEach((color, index) => {
             g.fillStyle(color, 1).fillRect(0, index * band, this.width, band + 1);
@@ -66,14 +67,14 @@ export class ResultsScene extends Phaser.Scene {
 
     drawReport() {
         const compact = this.width < 720;
-        const font = "Arial, Helvetica, sans-serif";
+        const font = GAME_FONT;
         const title = this.runData.complete ? "MISSION COMPLETE" : "EXPEDITION REPORT";
         this.add.text(this.width / 2, 35, title, {
             fontFamily: font,
-            fontSize: compact ? "24px" : "34px",
+            fontSize: compact ? "27px" : "38px",
             fontStyle: "bold",
             color: "#ffd166",
-            stroke: "#241923",
+            stroke: "#08131d",
             strokeThickness: 5
         }).setOrigin(0.5);
 
@@ -88,9 +89,9 @@ export class ResultsScene extends Phaser.Scene {
             const recordLabel = `★ NEW ${records.join(" + ")} RECORD! ★`;
             this.add.text(this.width / 2, 78, recordLabel, {
                 fontFamily: font,
-                fontSize: compact ? "14px" : "19px",
+                fontSize: compact ? "16px" : "21px",
                 fontStyle: "bold",
-                color: "#45d6c4"
+                color: "#66e0cf"
             }).setOrigin(0.5);
         }
 
@@ -120,10 +121,10 @@ export class ResultsScene extends Phaser.Scene {
         const topY = compact ? 112 : 125;
         const reportPanel = this.add.text(leftX, topY, report, {
             fontFamily: font,
-            fontSize: compact ? "13px" : "17px",
-            color: "#fff1c1",
+            fontSize: compact ? "15px" : "19px",
+            color: "#f7fbff",
             lineSpacing: compact ? 6 : 8,
-            backgroundColor: "#211720dd",
+            backgroundColor: "#172433dd",
             padding: { x: 14, y: 12 }
         });
 
@@ -146,8 +147,8 @@ export class ResultsScene extends Phaser.Scene {
             `NEW DISCOVERIES\n${discoveredText}`,
             {
             fontFamily: font,
-            fontSize: compact ? "11px" : "14px",
-            color: "#ffd7a6",
+            fontSize: compact ? "14px" : "16px",
+            color: "#d9e7f2",
             lineSpacing: 6,
             wordWrap: { width: compact ? this.width - 40 : this.width * 0.47 }
             }
@@ -165,10 +166,10 @@ export class ResultsScene extends Phaser.Scene {
             : 130;
         this.add.text(boardX, boardY, `LOCAL EXPLORERS\n${boardLines.join("\n")}`, {
             fontFamily: font,
-            fontSize: compact ? "11px" : "15px",
-            color: "#fff1c1",
+            fontSize: compact ? "14px" : "17px",
+            color: "#f7fbff",
             lineSpacing: 8,
-            backgroundColor: "#3b2525dd",
+            backgroundColor: "#162838f2",
             padding: { x: 14, y: 12 }
         });
 
@@ -186,10 +187,10 @@ export class ResultsScene extends Phaser.Scene {
         const notesButton = pixelButton(this, "FIELD NOTES", () => this.notebook?.open())
             .setPosition(compact ? this.width / 2 : this.width * 0.86, compact ? buttonY - 165 : buttonY);
         if (compact) {
-            launchButton.setFontSize(14);
-            playerButton.setFontSize(14);
-            resetButton.setFontSize(14);
-            notesButton.setFontSize(14);
+            launchButton.setFontSize(16);
+            playerButton.setFontSize(16);
+            resetButton.setFontSize(16);
+            notesButton.setFontSize(16);
         }
 
         this.add.text(
@@ -198,8 +199,8 @@ export class ResultsScene extends Phaser.Scene {
             storageAvailable ? "LOCAL SAVE ON" : "LOCAL SAVE OFF",
             {
                 fontFamily: font,
-                fontSize: "10px",
-                color: storageAvailable ? "#45d6c4" : "#ff8a66"
+                fontSize: "14px",
+                color: storageAvailable ? "#66e0cf" : "#ff9f85"
             }
         ).setOrigin(1, 1);
     }
